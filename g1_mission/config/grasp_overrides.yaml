@@ -1,0 +1,31 @@
+# Per-instrument grasp parameters, hand-maintained (config.load_catalog merges them over the generated
+# instruments.yaml). Keys used by the Pick skill:
+#   grasp_z      power-grasp centre along the instrument axis from the tip (m)
+#   hand_close   Revo2 closure [thumb, thumb_aux, index, middle, ring, pinky], 0 open .. 1 closed
+#   lift         straight lift out of the rack (m)
+#   straighten   re-align the instrument vertical in the hand before lifting (bool)
+#   note         why the values differ from the defaults, known issues
+defaults:
+  hand_close: [0.85, 1.0, 1.0, 1.0, 1.0, 1.0]
+  lift: 0.12
+  straighten: true
+instruments:
+  scalpel_handle:
+    note: i4h scalpel handle (153 mm, stored blade-down); defaults
+  adson_forceps:
+    note: stand-in (120 mm); defaults
+  veress_needle:
+    note: hub up; grasp at the catalogue grasp site (138 mm, below the hub)
+  trocar:
+    note: head up; slot 6 is at the edge of the right hand's reach (uses the waist)
+  needle_driver:
+    note: >-
+      stand-in, now 180 mm (7 in) with a 70-134 mm straight grip below the rings (hospital-sim-env/objects rebuild); 5/5 offline
+      with this lighter finger closure (kept from the 140 mm version, whose short shank let the fingers hook the rings).
+    hand_close: [0.85, 1.0, 0.75, 0.75, 1.0, 1.0]
+  scissors:
+    note: >-
+      rack holes are now sized to the swept section (tip to guide top), so it lifts straight out
+      (scripts/check_extraction.py 0.0 mm); 5/5 offline with and without rack offsets.
+  angled_tweezers:
+    note: lifts straight out of the rebuilt rack (swept-section holes); 5/5 offline with and without rack offsets

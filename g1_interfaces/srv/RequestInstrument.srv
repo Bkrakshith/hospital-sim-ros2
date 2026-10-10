@@ -1,0 +1,6 @@
+# Ask the scrub-nurse mission for an instrument (docs/interfaces.md section 6).
+string instrument   # instrument name as listed in /g1/mission/status "instruments" (e.g. scalpel_handle)
+string requester    # who asked (ui, voice, test, ...)
+---
+bool accepted
+string message

@@ -1,0 +1,17 @@
+# Nav2 check on the saved survey map (maps/hospital_full): AMCL from the spawn pose (main lobby, world origin),
+# then three goals in different parts of the building (theatre -> PACU -> east wing was tried first: 2 of 3, the robot
+# wedged itself on the PACU door jamb; this order avoids leaving PACU). Used with
+#   survey_runner.py --route config/nav_check_route.yaml --initial-pose 0,0,0 \
+#       --nav-cmd "ros2 launch g1_navigation nav.launch.py use_sim_time:=true"      (map = hospital_full default)
+# Map frame = sim world frame. Named locations: g1_mission/config/locations.yaml.
+frame: map
+start: {x: 0.0, y: 0.0, yaw: 0.0, note: main_lobby}
+stairs:
+- name: central stair hall
+  box: [7.66, 11.0, 10.26, 15.0]
+- name: north-west hall
+  box: [-32.44, 15.45, -29.84, 19.45]
+waypoints:
+  - {name: theatre_instrument_table, area: "Operating theatre", x: 25.58, y: -20.12, yaw: -1.5708}
+  - {name: east_wing_corridor, area: "East wing corridor", x: 18.8, y: 20.0, yaw: 1.5708}
+  - {name: main_lobby, area: "Main lobby", x: 0.0, y: 0.0, yaw: 0.0}

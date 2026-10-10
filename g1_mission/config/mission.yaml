@@ -1,0 +1,30 @@
+# scrub_nurse mission parameters (g1_mission mission_node). Skill parameters: see g1_mission/skills/*.py.
+rate: 50.0                   # Hz: behaviour-tree tick + /g1/auto/* stream
+station: theatre_instrument_table
+arm: right
+# Ready pose of the upper body (17: waist 3, left arm 7, right arm 7): upper arms back (shoulder pitch +0.3),
+# forearms raised (elbow -0.9): hands 0.91-1.13 m high and at most ~0.31 m in front of the pelvis, clear of the
+# instruments standing in the rack 0.40 m ahead (the policy default, all zeros, puts the fingertips 0.42 m ahead).
+ready_pose: [0.0, 0.0, 0.0,  0.3, 0.0, 0.0, -0.9, 0.0, 0.0, 0.0,  0.3, 0.0, 0.0, -0.9, 0.0, 0.0, 0.0]
+# Arms while walking (GoTo): the locomotion policy's default. The placeholder was trained with the arms there; with
+# the raised ready pose it drifted backwards at ~0.1 m/s and Nav2 aborted (measured 2026-09-30).
+walk_pose: [0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+at_station_tolerance: 0.30   # m: closer than this to the station -> skip Nav2, go straight to FineAlign
+handover_station: auto       # where Handover runs: auto = locations.yaml handover_station (hospital-sim-env/objects layout: the
+                             # surgeon side; stand-ins: the instrument table). The instrument is carried there.
+handover_reach: 0.70         # m: surgeon hand closer than this to the pelvis -> hand over from where we stand
+at_location_tolerance: 0.06  # m: At(<location>)? check before moving between the table and the surgeon side
+approach_back: 0.25          # m: Nav2 goals stop this far short of fine-align stations; FineAlign walks the rest
+nav_goal_timeout: 600.0      # s (the placeholder walks slowly and Nav2 needs a few recovery spins)
+repeat: true                 # after ReturnToReady wait for the next request (false: finish after one handover)
+skills:
+  pick:       {impl: scripted, pre_dist: 0.10, lift: 0.12, retreat: 0.08, approach_speed: 0.06, close_time: 1.0}
+  handover:   {impl: scripted, pre_dist: 0.10, standoff: 0.01, grip_timeout: 15.0, blind_wait: 2.0}
+  # handover: {impl: policy, policy_path: /path/to/lerobot/act_handover, fallback: scripted}
+  retract:    {impl: scripted, distance: 0.12}
+  return_to_ready: {impl: scripted}
+  carry:      {impl: scripted, carry_pos: [0.22, -0.14, 0.20]}
+  # fine_align: vx_forward_min / max_vel are for the placeholder policy (policy vx = 0.4 vx - 0.13: commands below ~0.33 m/s
+  # do not move it forward); diverge aborts if the robot walks away from the station instead of towards it
+  fine_align: {impl: scripted, tol_xy: 0.05, tol_yaw: 0.06, timeout: 60.0, vx_forward_min: 0.34, max_vel: [0.40, 0.12, 0.3], diverge: 0.25}
+  locate:     {impl: scripted, max_range: 0.75}

@@ -1,0 +1,10 @@
+# Nav2 KeepoutFilter mask (NOT a map): both staircases of the Isaac hospital (Geo_M_Stairs*, boxes in
+# config/survey_route.yaml) grown by 1.25 m; with robot_radius 0.25 the pelvis stays >= 1.5 m from the stairs.
+# World / map frame. Used by navigation.launch.py keepout:=true (costmap_filter_info_server + filter mask server).
+image: stairs_keepout.pgm
+mode: scale
+resolution: 0.1
+origin: [-52.0, -27.0, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

@@ -1,0 +1,8 @@
+# saved by the G1 dashboard from slam_toolbox at 2026-09-29 23:37:05
+image: hospital_wing_slam.pgm
+mode: trinary
+resolution: 0.05
+origin: [-3.1697, -12.0272, 0.0000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

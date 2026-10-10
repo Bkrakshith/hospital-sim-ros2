@@ -1,0 +1,8 @@
+# GROUND-TRUTH map rasterised from simulator geometry (mjcf hospital_g1.xml); not a SLAM map
+image: hospital_gt.pgm
+mode: trinary
+resolution: 0.05
+origin: [-49.440, -25.640, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

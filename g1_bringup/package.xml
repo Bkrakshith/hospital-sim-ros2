@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>g1_bringup</name>
+  <version>0.1.0</version>
+  <description>Top-level launches for the Hospital_G1 teleoperation stack</description>
+  <maintainer email="bangrak2000@gmail.com">rakshith</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>g1_mujoco_sim</exec_depend>
+  <exec_depend>g1_controller</exec_depend>
+  <exec_depend>g1_teleop_manager</exec_depend>
+  <exec_depend>g1_teleop_keyboard</exec_depend>
+  <exec_depend>g1_description</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

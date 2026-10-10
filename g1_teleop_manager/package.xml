@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>g1_teleop_manager</name>
+  <version>0.1.0</version>
+  <description>G1 mode FSM (DAMP/STAND/LOCO/MANIP/NAV/AUTO/HOLD), command arbiter, control lease, UI watchdog, e-stop interlock, speed zones (docs/interfaces.md 3.2-3.4)</description>
+  <maintainer email="bangrak2000@gmail.com">rakshith</maintainer>
+  <license>Apache-2.0</license>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>g1_interfaces</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

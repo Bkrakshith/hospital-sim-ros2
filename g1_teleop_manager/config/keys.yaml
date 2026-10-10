@@ -1,0 +1,38 @@
+# Key bindings and teleop limits (docs/interfaces.md 3.3). Keys arrive on /g1/teleop/key (std_msgs/String,
+# one lower-case key per message; the space bar is "space" or " ").
+keys:
+  r: ready          # DAMP -> STAND; also HOLD -> STAND (explicit resume after a stop)
+  l: loco           # STAND -> LOCO
+  w: vx_up
+  s: vx_down
+  a: vy_up          # strafe left
+  d: vy_down        # strafe right
+  q: wz_up          # turn left
+  e: wz_down        # turn right
+  space: zero
+  p: pause          # LOCO -> STAND, NAV -> STAND
+  m: manip          # STAND -> MANIP
+  n: manip_stop     # MANIP -> STAND (arms blend to default first)
+  g: nav            # STAND -> NAV
+  x: estop          # any -> DAMP ("power off": the robot sinks to the floor)
+  o: hold           # STOP: any -> HOLD (zero velocity, arms frozen, task paused, keeps balancing)
+limits:
+  vx: [-0.5, 0.8]
+  vy: [-0.4, 0.4]
+  wz: [-1.0, 1.0]
+step:
+  vx: 0.1
+  vy: 0.1
+  wz: 0.2
+key_timeout: 0.5          # s without a key -> teleop velocity back to zero
+cmd_vel_teleop_timeout: 0.5
+cmd_vel_nav_timeout: 0.5
+manip_blend_time: 1.0     # s, arms back to default when leaving MANIP
+hold_blend_time: 2.5      # s (>= 2), arms from the frozen pose back to default on HOLD -> STAND
+publish_rate: 50.0        # Hz for /g1/cmd_vel and the blend stream
+safety:                   # docs/interfaces.md 3.4
+  lease_ttl: 30.0         # s without heartbeat/renew -> the control lease lapses
+  heartbeat_timeout: 1.0  # s: lease holder's /g1/ui/heartbeat missing in LOCO/MANIP -> HOLD (source watchdog)
+  estop_required: true    # hardware e-stop heartbeat required for LOCO/MANIP/NAV/AUTO (DEV override: node param
+                          # DEV_ONLY_ignore_estop_heartbeat:=true)
+  estop_timeout: 0.5      # s without /g1/estop/heartbeat -> motion locked (-> HOLD if moving)

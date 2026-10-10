@@ -1,0 +1,22 @@
+# Speed zones (docs/interfaces.md 3.4; docs/ui/02 S-5). Polygons in the map frame (= sim world frame for hospital_gt).
+# The manager clamps the planar speed |(vx, vy)| of /g1/cmd_vel to max_speed while map->pelvis is inside a polygon
+# (first match wins). manual_cap applies to LOCO everywhere. Without map->pelvis (no localisation) no zone applies.
+# Approximate room outlines from ros2_ws/src/hospital-sim-ros2/g1_mission/config/locations.yaml; a technician must verify them on the
+# real map (two-person rule for speed changes, 04 §5).
+# NOTE: the placeholder policy needs about 0.34 m/s commanded before it creeps forward (cmd_vel_offset), so caps
+# below ~0.4 stop it altogether. S-5 asks for 0.3 m/s manual in clinical areas: lower these with a trained policy.
+frame: map
+manual_cap: 0.5
+zones:
+  - name: operating_theatre
+    max_speed: 0.5
+    polygon: [[21.5, -25.0], [30.5, -25.0], [30.5, -15.3], [21.5, -15.3]]
+  - name: sterile_store
+    max_speed: 0.4
+    polygon: [[8.0, -20.0], [12.0, -20.0], [12.0, -15.3], [8.0, -15.3]]
+  - name: scrub_room
+    max_speed: 0.4
+    polygon: [[13.0, -20.0], [19.0, -20.0], [19.0, -15.3], [13.0, -15.3]]
+  - name: surgical_corridor
+    max_speed: 0.6
+    polygon: [[6.5, -15.3], [31.0, -15.3], [31.0, -10.5], [6.5, -10.5]]

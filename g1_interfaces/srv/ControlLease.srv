@@ -1,0 +1,15 @@
+# Control lease (docs/interfaces.md 3.4): one holder at a time may command manual motion (LOCO / MANIP) and,
+# while a lease is held, any motion. Stop (HOLD) and power off (DAMP) are accepted from everyone.
+# op: acquire | release | steal | renew | query
+string op
+string holder      # identity, e.g. "ui:ipad-or1-7f3a" (heartbeat-watched) or "keyboard"
+string role        # clinical | operator | technician | local
+string display     # human-readable, e.g. "iPad OR-1 · R. Kumar"
+string reason      # required for steal
+---
+bool ok
+string message
+string holder      # holder after the call ("" = free)
+string role
+string display
+float32 expires_in # s until the lease lapses without heartbeat/renew (0 when free)

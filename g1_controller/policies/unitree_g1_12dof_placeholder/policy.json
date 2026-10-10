@@ -1,0 +1,281 @@
+{
+ "name": "unitree_g1_12dof_placeholder",
+ "placeholder": true,
+ "description": "Unitree unitree_rl_gym pre-trained G1 12-DoF locomotion policy (legs only). Waist/arms/hands are PD-held by g1_controller at default_qpos or /g1/upper_body_target. PLACEHOLDER until g1-whole-body-rl/exports/ provides the ULTRA-style whole-body policy.",
+ "source": "unitree_rl_gym/deploy/pre_train/g1/motion.pt + deploy/deploy_mujoco/configs/g1.yaml",
+ "control_dt": 0.02,
+ "sim_dt": 0.002,
+ "joint_names": [
+  "left_hip_pitch_joint",
+  "left_hip_roll_joint",
+  "left_hip_yaw_joint",
+  "left_knee_joint",
+  "left_ankle_pitch_joint",
+  "left_ankle_roll_joint",
+  "right_hip_pitch_joint",
+  "right_hip_roll_joint",
+  "right_hip_yaw_joint",
+  "right_knee_joint",
+  "right_ankle_pitch_joint",
+  "right_ankle_roll_joint",
+  "waist_yaw_joint",
+  "waist_roll_joint",
+  "waist_pitch_joint",
+  "left_shoulder_pitch_joint",
+  "left_shoulder_roll_joint",
+  "left_shoulder_yaw_joint",
+  "left_elbow_joint",
+  "left_wrist_roll_joint",
+  "left_wrist_pitch_joint",
+  "left_wrist_yaw_joint",
+  "right_shoulder_pitch_joint",
+  "right_shoulder_roll_joint",
+  "right_shoulder_yaw_joint",
+  "right_elbow_joint",
+  "right_wrist_roll_joint",
+  "right_wrist_pitch_joint",
+  "right_wrist_yaw_joint"
+ ],
+ "controlled_joints": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11
+ ],
+ "default_qpos": [
+  -0.1,
+  0.0,
+  0.0,
+  0.3,
+  -0.2,
+  0.0,
+  -0.1,
+  0.0,
+  0.0,
+  0.3,
+  -0.2,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "action_scale": 0.25,
+ "kp": [
+  100.0,
+  100.0,
+  100.0,
+  150.0,
+  40.0,
+  40.0,
+  100.0,
+  100.0,
+  100.0,
+  150.0,
+  40.0,
+  40.0,
+  200,
+  200,
+  200,
+  100,
+  100,
+  50,
+  50,
+  20,
+  20,
+  20,
+  100,
+  100,
+  50,
+  50,
+  20,
+  20,
+  20
+ ],
+ "kd": [
+  2.0,
+  2.0,
+  2.0,
+  4.0,
+  2.0,
+  2.0,
+  2.0,
+  2.0,
+  2.0,
+  4.0,
+  2.0,
+  2.0,
+  5,
+  5,
+  5,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1
+ ],
+ "torque_limit": [
+  88,
+  139,
+  88,
+  139,
+  50,
+  50,
+  88,
+  139,
+  88,
+  139,
+  50,
+  50,
+  88,
+  50,
+  50,
+  25,
+  25,
+  25,
+  25,
+  25,
+  5,
+  5,
+  25,
+  25,
+  25,
+  25,
+  25,
+  5,
+  5
+ ],
+ "obs": [
+  {
+   "name": "base_ang_vel",
+   "dim": 3,
+   "scale": 0.25
+  },
+  {
+   "name": "projected_gravity",
+   "dim": 3,
+   "scale": 1.0
+  },
+  {
+   "name": "cmd_vel",
+   "dim": 3,
+   "scale": [
+    2.0,
+    2.0,
+    0.25
+   ]
+  },
+  {
+   "name": "joint_pos_rel",
+   "dim": 12,
+   "scale": 1.0,
+   "joints": "controlled"
+  },
+  {
+   "name": "joint_vel",
+   "dim": 12,
+   "scale": 0.05,
+   "joints": "controlled"
+  },
+  {
+   "name": "last_action",
+   "dim": 12,
+   "scale": 1.0
+  },
+  {
+   "name": "gait_phase",
+   "dim": 2,
+   "scale": 1.0,
+   "period": 0.8
+  }
+ ],
+ "history_len": 1,
+ "commands": {
+  "cmd_vel": [
+   3
+  ],
+  "upper_body_target": [
+   17
+  ]
+ },
+ "cmd_vel_scale": [
+  0.4,
+  1.0,
+  1.0
+ ],
+ "cmd_vel_offset": [
+  -0.13,
+  0.0,
+  0.0
+ ],
+ "cmd_vel_limits": {
+  "vx": [
+   -0.5,
+   0.8
+  ],
+  "vy": [
+   -0.4,
+   0.4
+  ],
+  "wz": [
+   -1.0,
+   1.0
+  ]
+ },
+ "onnx": {
+  "input": "obs",
+  "output": "actions",
+  "obs_dim": 47,
+  "action_dim": 12,
+  "recurrent": [
+   {
+    "input": "h_in",
+    "output": "h_out",
+    "shape": [
+     1,
+     1,
+     64
+    ]
+   },
+   {
+    "input": "c_in",
+    "output": "c_out",
+    "shape": [
+     1,
+     1,
+     64
+    ]
+   }
+  ]
+ }
+}

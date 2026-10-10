@@ -1,0 +1,7 @@
+/* dark Qt style for the slam_survey.rviz recording: rviz2 -d slam_survey.rviz -stylesheet slam_survey_dark.qss */
+QWidget { background-color: #12161e; color: #dfe5ee; }
+QMenuBar, QMenuBar::item { background-color: #0b0e14; color: #9aa4b2; }
+QDockWidget { color: #ffcf40; font: bold 15px "DejaVu Sans"; }
+QDockWidget::title { background-color: #0b0e14; padding-left: 10px; padding-top: 4px; padding-bottom: 4px; }
+QStatusBar, QStatusBar QLabel, QStatusBar QPushButton { background-color: #0b0e14; color: #0b0e14; }
+QSplitter::handle, QMainWindow::separator { background-color: #0b0e14; width: 3px; height: 3px; }

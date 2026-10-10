@@ -1,0 +1,15 @@
+# g1_perception parameters (perception.launch.py). mode: gt = /sim/objects ground truth (sim only), onnx / mediapipe = real.
+g1_perception_detector:
+  ros__parameters:
+    mode: gt                   # gt | onnx
+    model: ""                  # "" -> $HG1_ROOT/hospital-sim-perception/models/instrument_obb.onnx (falls back to the smoke model)
+    output_frame: map
+    camera_frame: d435_link
+    max_hz: 10.0
+    conf: 0.35
+    annotate: true
+g1_perception_surgeon_hand:
+  ros__parameters:
+    mode: gt                   # gt | mediapipe
+    output_frame: map
+    max_hz: 10.0
