@@ -437,3 +437,12 @@ The placeholder has these limits:
   `ros2 launch` process exits anyway.
 - The slam_toolbox pose-graph serialization fails in this install (`g1_navigation/README.md`, "Tested").
 - The open to-do list for the whole project is `docs/TODO.md` in the master repository.
+
+## License
+
+The license of this repository is the Apache License, Version 2.0 (see `LICENSE`).
+You can use, change and share this work, also for commercial use.
+If you share this work or a work that you built on it, keep the `NOTICE` file.
+Give this credit in your documentation and product credits: "Based on hospital-sim by Bkrakshith (https://github.com/Bkrakshith/hospital-sim)".
+To cite this work in a publication, use `CITATION.cff`.
+Some third-party parts keep their own licences. The `NOTICE` file lists them.

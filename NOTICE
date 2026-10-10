@@ -1,0 +1,25 @@
+hospital-sim-ros2
+Copyright 2026 Bkrakshith (https://github.com/Bkrakshith)
+
+hospital-sim-ros2 is part of hospital-sim (https://github.com/Bkrakshith/hospital-sim), created by Bkrakshith.
+
+This work is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Attribution. Section 4 of the licence requires that any redistribution or derivative work keeps this
+NOTICE file and shows its attribution. If you use this work or build on it, give this credit in your
+documentation, in the credits of your product, and in your source distribution:
+
+    Based on hospital-sim by Bkrakshith (https://github.com/Bkrakshith/hospital-sim)
+
+If you use this work in a publication, cite it with the details in CITATION.cff.
+
+Third-party components
+
+The parts below are not covered by the copyright above and keep their own licences.
+
+- third_party/unitree_ros2 contains the unitree_hg, unitree_go and unitree_api message packages from
+  unitreerobotics/unitree_ros2, BSD-3-Clause, Copyright (c) 2016-2024 HangZhou YuShu TECHNOLOGY CO.,LTD.
+  ("Unitree Robotics"). See third_party/unitree_ros2/LICENSE.
+
+- g1_controller/policies/unitree_g1_12dof_placeholder is converted from the pre-trained G1 policy of
+  unitreerobotics/unitree_rl_gym, BSD-3-Clause, Unitree Robotics.
