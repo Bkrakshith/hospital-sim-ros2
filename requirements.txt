@@ -1,0 +1,37 @@
+# hospital-sim-ros2: Python packages the g1_* nodes import, for the shared .venv of the hospital-sim master
+# checkout (system python 3.10 with system site-packages). Pins are the versions installed there on 2026-10-10.
+#
+#     source env.sh
+#     .venv/bin/pip install -r ros2_ws/src/hospital-sim-ros2/requirements.txt
+#
+# Not listed because they come from ROS 2 Humble or Ubuntu 22.04 apt (see README.md "Dependencies"):
+#   rclpy, launch, launch_ros, ament_index_python, tf2_ros, message_filters and every *_msgs / *_srvs package
+#   (ros-humble-*), colcon (python3-colcon-common-extensions), pytest 6.2.5 (python3-pytest),
+#   scipy 1.8.0 (python3-scipy), Pillow 9.0.1 (python3-pil), matplotlib 3.5.1 (python3-matplotlib),
+#   PyQt5 5.15.6 (python3-pyqt5). These are used only by g1_navigation/scripts and the tests.
+
+# g1_mujoco_sim, g1_mission/offline.py, g1_navigation/scripts/rasterize_world.py
+mujoco==3.14.0
+# g1_controller (policy runner), g1_perception (OBB detector)
+onnxruntime==1.23.2
+# every node
+numpy==1.26.4
+# g1_teleop_manager (keys.yaml, zones.yaml), g1_mission/config.py, scripts
+PyYAML==6.0.3
+# g1_perception/surgeon_hand_node.py (mode mediapipe)
+mediapipe==1.0.1
+# g1_perception (letterbox, annotated JPEG), g1_mission/recorder.py
+opencv-contrib-python==4.10.0.84
+# g1_mission behaviour tree
+py_trees==2.6.0
+# g1_mission/kinematics.py (pinocchio IK; PyPI name "pin")
+pin==3.9.0
+# g1_mission/recorder.py (LeRobot v2.1 parquet + mp4), scripts/offline_trials.py
+pyarrow==25.0.1
+imageio==2.38.0
+imageio-ffmpeg==0.6.0
+
+# Optional, not needed to run the stack:
+#   torch==2.3.0+cpu   g1_mission/skills/policy.py (LearnedPolicySkill) and g1_controller/scripts/convert_placeholder.py
+#                      (that script must run with the conda env "unitree-rl", not with .venv)
+#   lerobot            g1_mission/skills/policy.py; not installed anywhere yet, no policy has been trained

@@ -1,5 +1,4 @@
-"""Grasp pose (x, y, z, yaw) from an oriented box + aligned depth. The maths is documented in hospital-sim-perception/README.md
-("Grasp pose from OBB + depth"); in short:
+"""Grasp pose (x, y, z, yaw) from an oriented box + aligned depth. In short:
 
 1. Sample the depth image inside the OBB shrunk to 80 % across (drops the long edges, mostly background) and
    98 % along (keeps the instrument's ends: the top of an upright instrument sets its origin height).

@@ -9,7 +9,7 @@ Message: [{"label", "score", "bbox_obb": [cx, cy, w, h, angle_deg] (image pixels
            "source": "onnx" | "ground_truth"}]
 mode gt   : CHEAT for the sim. Every instrument of /sim/objects, score 1, "source": "ground_truth"; bbox_obb projected
             from the catalogue box when the camera pose is known. Needs no camera images.
-mode onnx : YOLO11-OBB (hospital-sim-perception/train/export_onnx.py) on /g1/head_camera/image_raw + depth + camera_info; pose and
+mode onnx : an external YOLO-OBB ONNX export (see obb_onnx.py for the contract) on /g1/head_camera/image_raw + depth + camera_info; pose and
             grasp from g1_perception.grasp (OBB + aligned depth). Frame = output_frame when the camera pose is known
             (TF, or /sim/ground_truth + TF in the sim), else the camera's d435_link frame.
 Also publishes /g1/perception/annotated/compressed (JPEG with the boxes) at <= 5 Hz for the UI.
@@ -52,7 +52,8 @@ class DetectorNode(Node):
         super().__init__("g1_perception_detector")
         p = self.declare_parameter
         self.mode = p("mode", "gt").value
-        model = p("model", os.path.join(ROOT, "hospital-sim-perception/models/instrument_obb.onnx")).value
+        # ONNX detector: ROS parameter `model`, else $G1_PERCEPTION_MODEL. No default inside the stack.
+        model = p("model", os.environ.get("G1_PERCEPTION_MODEL", "")).value
         self.catalog = json.load(open(p("catalog", os.path.join(ROOT, "hospital-sim-env/objects/catalog.json")).value))
         self.output_frame = p("output_frame", "map").value
         self.camera_frame = p("camera_frame", "d435_link").value
@@ -77,10 +78,9 @@ class DetectorNode(Node):
         else:
             from .obb_onnx import OBBDetector
 
-            if not os.path.exists(model):
-                smoke = os.path.join(ROOT, "hospital-sim-perception/models/instrument_obb_smoke.onnx")
-                self.get_logger().warn(f"{model} not found; using the SMOKE-TEST model {smoke} (2 epochs, not usable)")
-                model = smoke
+            if not model or not os.path.exists(model):
+                raise SystemExit("mode=onnx needs a detector: set the `model` parameter or G1_PERCEPTION_MODEL "
+                                 f"to an ONNX file (got {model!r}). Use mode=gt in simulation.")
             self.det = OBBDetector(model, conf=self.conf)
             self.get_logger().info(f"mode=onnx: {model}, labels {self.det.labels}")
         self.create_timer(5.0, self._stats)

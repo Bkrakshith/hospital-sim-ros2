@@ -1,7 +1,7 @@
 """YOLO11-OBB ONNX inference with onnxruntime + numpy post-processing (no torch / ultralytics at run time).
 
-Model: hospital-sim-perception/train/export_onnx.py output (static 1x3xSxS, raw head [1, 4 + nc + 1, N]: cx, cy, w, h in input
-pixels, nc sigmoid class scores, angle in rad). Post-processing: score threshold, class-aware rotated NMS using the
+Model contract: a static 1x3xSxS YOLO-OBB ONNX export with a sidecar <model>.json ({"labels": [...], "imgsz": S}) and
+the raw head [1, 4 + nc + 1, N]: cx, cy, w, h in input pixels, nc sigmoid class scores, angle in rad. Post-processing: score threshold, class-aware rotated NMS using the
 probabilistic IoU of the boxes' Gaussian approximations (as Ultralytics), undo the letterbox.
 """
 from __future__ import annotations

@@ -119,10 +119,11 @@ def test_min_area_rect_long_side():
 
 
 def test_onnx_detector_runs_if_model_present():
-    model = os.path.join(ROOT, "hospital-sim-perception/models/instrument_obb_smoke.onnx")
-    img_path = os.path.join(ROOT, "hospital-sim-perception/data/sample_v1/rgb/000000.jpg")
-    if not (os.path.exists(model) and os.path.exists(img_path)):
-        pytest.skip("no model / sample data")
+    # Opt-in: point these at any YOLO-OBB export + a test image. The stack ships no detector.
+    model = os.environ.get("G1_PERCEPTION_MODEL", "")
+    img_path = os.environ.get("G1_PERCEPTION_TEST_IMAGE", "")
+    if not (model and img_path and os.path.exists(model) and os.path.exists(img_path)):
+        pytest.skip("set G1_PERCEPTION_MODEL and G1_PERCEPTION_TEST_IMAGE to run the ONNX detector test")
     from PIL import Image
 
     from g1_perception.obb_onnx import OBBDetector

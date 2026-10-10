@@ -2,7 +2,7 @@
 g1_perception_detector:
   ros__parameters:
     mode: gt                   # gt | onnx
-    model: ""                  # "" -> $HG1_ROOT/hospital-sim-perception/models/instrument_obb.onnx (falls back to the smoke model)
+    model: ""                  # onnx mode only: path to a YOLO-OBB ONNX export, else $G1_PERCEPTION_MODEL (no default)
     output_frame: map
     camera_frame: d435_link
     max_hz: 10.0

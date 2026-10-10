@@ -15,8 +15,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
     cfg = os.path.join(get_package_share_directory("g1_perception"), "config", "perception.yaml")
     args = [DeclareLaunchArgument("detector", default_value="gt"), DeclareLaunchArgument("hand", default_value="gt"),
-            DeclareLaunchArgument("model", default_value=os.path.join(os.environ.get("HG1_ROOT", ""),
-                                                                      "hospital-sim-perception/models/instrument_obb.onnx")),
+            DeclareLaunchArgument("model", default_value=os.environ.get("G1_PERCEPTION_MODEL", ""),
+                                  description="onnx mode: path to a YOLO-OBB ONNX export"),
             DeclareLaunchArgument("use_sim_time", default_value="true")]
     st = {"use_sim_time": LaunchConfiguration("use_sim_time")}
     return LaunchDescription(args + [
