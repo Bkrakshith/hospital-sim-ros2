@@ -4,7 +4,7 @@
                                          [spawn:=corridor_west|link|lobby|"x,y,yaw"] [policy:=<name|dir>]
                                          [harness:=true] [lidar:=true] [manager:=true]
                                          [effort_limits:=auto|model|ultra] [record:=/path/run.npz]
-                                         [fixed_base:=false] [camera:=true]
+                                         [fixed_base:=false] [camera:=true] [fixtures_tier:=wing|tier1|tier2|full]
 
 backend:=isaac starts everything except the MuJoCo sim node; run the Isaac sim yourself first:
     ./g1-isaac-sim/run.sh --headless [--flat] [--spawn link]     (see g1-isaac-sim/README.md)
@@ -63,7 +63,8 @@ def _setup(context):
                          "harness": _truthy(lc("harness")), "lidar": _truthy(lc("lidar")),
                          "model": os.path.join(root, "g1-mujoco-sim", f"{world}_g1.xml"),
                          "record_path": lc("record"), "effort_limits": effort,
-                         "fixed_base": _truthy(lc("fixed_base")), "camera": _truthy(lc("camera"))}],
+                         "fixed_base": _truthy(lc("fixed_base")), "camera": _truthy(lc("camera")),
+                         "fixtures_tier": lc("fixtures_tier")}],
             # offscreen head-camera rendering: EGL when there is no viewer window (GLFW needs one)
             additional_env={} if _truthy(lc("viewer")) else {"MUJOCO_GL": "egl"}))
     try:
@@ -108,6 +109,10 @@ def generate_launch_description():
                               description="weld the pelvis at the spawn pose (arm-skill development; no walking)"),
         DeclareLaunchArgument("camera", default_value="true",
                               description="head RGB-D camera /g1/head_camera/* (rendered only while subscribed)"),
+        DeclareLaunchArgument("fixtures_tier", default_value="",
+                              description="building fixture tier of the MuJoCo world: wing, tier1, tier2 or full "
+                                          "(empty: $HG1_FIXTURES, else tier2). The sim node loads "
+                                          "g1-mujoco-sim/<world>_g1_<tier>.xml. Use the same tier as Isaac."),
         DeclareLaunchArgument("compute_crc", default_value="false",
                               description="LowCmd CRC (the sim ignores it; set true for the real robot)"),
         OpaqueFunction(function=_setup),

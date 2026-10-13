@@ -9,55 +9,64 @@
 # A* between consecutive waypoints for a 0.35 m robot radius (g1-isaac-sim/tools/rasterize_colliders.py,
 # scripts/plot_survey_route.py): every leg is collision-free, every planned leg stays >= 1.5 m from both staircases
 # (Geo_M_Stairs* in the Isaac hospital; boxes below), and the route ends near the start (loop closure).
+# 2026-10-13 (main-building re-plan: A&E in the west, 6-bed ward in the east, 4 m link, PACU wall at wing x = 4):
+# the up-stairs are enclosed by screens with FD30S doors and the down-stairs are sealed by fixed screens, so the
+# `stairs` boxes are now the enclosures and the pits, kept 0.25 m away (`stairs_keepout_m`; scripts/make_keepout.py
+# writes maps/stairs_keepout from them). Waypoints moved off the new partitions and dressing (design_final.md s.10);
+# the link waypoints are on its centre line x 19.23. Re-checked with plot_survey_route.py on the tier2 raster.
 # Rooms behind closed doors / doorways narrower than ~0.8 m are not entered (the lidar sees what it can through
 # them). yaw: omitted = face the next waypoint on arrival. area: shown in the video captions.
-# Planned length (A* on the collider raster) ~530 m, 60 waypoints. Plot: maps/survey_route.png.
+# Planned length (A* on the collider raster) ~517 m, 60 waypoints (2026-10-13, tier2). Plot: maps/survey_route.png.
 frame: map
 start: {x: 0.0, y: 0.0, yaw: 0.0, note: 'Isaac spawn "0,0,0" = world origin, main
     lobby'}
-stairs_keepout_m: 1.5
+stairs_keepout_m: 0.25
 stairs:
-- name: Geo_M_Stairs_873 + Stairs2 (central stair hall)
-  box: [7.66, 11.0, 10.26, 15.0]
-- name: Geo_M_Stairs4 + Stairs5 (north-west hall)
-  box: [-32.44, 15.45, -29.84, 19.45]
+- name: east stair enclosure (Geo_M_Stairs_873 + Stairs2; screens StairE_West/StairE_South, FD30S door E_Stair)
+  box: [7.4, 10.4, 11.16, 19.35]
+- name: west stair enclosure (Geo_M_Stairs4 + Stairs5; screens StairW_South/StairW_East, FD30S door W_Stair)
+  box: [-32.44, 14.45, -29.55, 23.6]
+- name: south-west down-stair pit (behind the fixed screen DownW_Fixed, x -42.0)
+  box: [-48.34, 1.75, -42.05, 6.95]
+- name: north-east down-stair pit (behind the fixed screens DownNE_FixedS/DownNE_FixedE)
+  box: [10.76, 32.2, 18.07, 36.85]
 waypoints:
   - {name: lobby_south_west, area: "Main lobby", x: -7.95, y: -1.35}   # leg 8.7 m
-  - {name: hall_south_west, area: "Main lobby", x: -10.85, y: 3.45}   # leg 6.6 m
-  - {name: hall_south_mid, area: "Central hall", x: -19.75, y: 3.95}   # leg 9.4 m
-  - {name: west_hall, area: "West hall", x: -27.95, y: 5.05}   # leg 8.8 m
-  - {name: west_hall_north, area: "West hall", x: -27.95, y: 9.55}   # leg 4.5 m
-  - {name: nw_room_door, area: "West hall", x: -26.45, y: 13.05}   # leg 4.1 m
-  - {name: nw_room, area: "North-west ward", x: -25.95, y: 20.55}   # leg 7.7 m
-  - {name: nw_room_exit, area: "West hall", x: -26.95, y: 12.55}   # leg 8.4 m
-  - {name: west_link, area: "West corridor", x: -35.45, y: 12.55}   # leg 8.5 m
-  - {name: west_corridor_south, area: "West corridor", x: -39.95, y: 12.55}   # leg 4.5 m
-  - {name: west_room_sw, area: "West wing room", x: -45.05, y: 9.05}   # leg 8.5 m
-  - {name: west_corridor_mid, area: "West corridor", x: -39.95, y: 20.05}   # leg 16.0 m
-  - {name: west_room_w3, area: "West wing room", x: -44.95, y: 20.05}   # leg 5.0 m
-  - {name: west_corridor_north, area: "West corridor", x: -39.95, y: 30.55}   # leg 14.3 m
-  - {name: west_room_nw, area: "West wing room", x: -45.65, y: 31.55}   # leg 6.5 m
-  - {name: west_corridor_back, area: "West corridor", x: -39.95, y: 12.05}   # leg 24.8 m
-  - {name: west_corridor_sw, area: "West corridor", x: -39.95, y: 6.05}   # leg 6.0 m
-  - {name: sw_hall, area: "South-west hall", x: -44.95, y: 4.55}   # leg 6.0 m
-  - {name: west_corridor_exit, area: "West corridor", x: -39.95, y: 11.55}   # leg 10.8 m
-  - {name: central_north_west, area: "Central hall", x: -21.95, y: 11.05}   # leg 18.5 m
+  - {name: hall_south_west, area: "Main lobby", x: -10.85, y: 3.45}   # leg 16.9 m
+  - {name: hall_south_mid, area: "Central hall", x: -19.75, y: 3.95}   # leg 9.5 m
+  - {name: west_hall, area: "A&E hall", x: -27.95, y: 5.05}   # leg 8.8 m
+  - {name: west_hall_north, area: "A&E hall (handover bay)", x: -27.95, y: 9.55}   # leg 6.3 m
+  - {name: nw_room_door, area: "A&E hall", x: -26.45, y: 13.05}   # leg 4.1 m
+  - {name: nw_room, area: "A&E resus", x: -25.6, y: 18.0}   # leg 5.8 m
+  - {name: nw_room_exit, area: "A&E hall", x: -26.95, y: 12.55}   # leg 6.5 m
+  - {name: west_link, area: "W compartment door", x: -34.5, y: 12.45}   # leg 7.5 m
+  - {name: west_corridor_south, area: "A&E majors corridor", x: -39.95, y: 12.55}   # leg 5.5 m
+  - {name: west_room_sw, area: "A&E isolation room", x: -45.05, y: 9.05}   # leg 8.5 m
+  - {name: west_corridor_mid, area: "A&E majors corridor", x: -39.95, y: 20.05}   # leg 16.0 m
+  - {name: west_room_w3, area: "A&E staff base", x: -44.95, y: 20.05}   # leg 5.4 m
+  - {name: west_corridor_north, area: "A&E majors corridor", x: -39.95, y: 30.55}   # leg 14.7 m
+  - {name: west_room_nw, area: "A&E majors cubicle", x: -44.3, y: 30.8}   # leg 4.5 m
+  - {name: west_corridor_back, area: "A&E majors corridor", x: -39.95, y: 12.05}   # leg 22.9 m
+  - {name: west_corridor_sw, area: "A&E majors corridor", x: -39.95, y: 6.05}   # leg 6.0 m
+  - {name: sw_hall, area: "A&E equipment park", x: -40.2, y: 5.8}   # leg 0.4 m
+  - {name: west_corridor_exit, area: "A&E majors corridor", x: -39.95, y: 11.55}   # leg 5.8 m
+  - {name: central_north_west, area: "Central hall", x: -21.95, y: 11.05}   # leg 19.0 m
   - {name: central_north_east, area: "Central hall", x: 2.05, y: 11.05}   # leg 24.9 m
-  - {name: stair_hall_north, area: "Stair hall (kept 1.5 m from the stairs)", x: 5.45, y: 18.25}   # leg 10.4 m
+  - {name: stair_hall_north, area: "Central hall (west of the E stair enclosure)", x: 5.45, y: 18.25}   # leg 10.4 m
   - {name: hall_east, area: "Central hall", x: 4.55, y: 6.55}   # leg 12.2 m
-  - {name: east_entry, area: "East wing", x: 13.55, y: 7.55}   # leg 9.4 m
-  - {name: east_corridor_south, area: "East wing corridor", x: 18.75, y: 7.55}   # leg 5.2 m
-  - {name: east_corridor_mid, area: "East wing corridor", x: 18.75, y: 19.95}   # leg 12.6 m
-  - {name: east_room_e, area: "East wing room", x: 24.55, y: 20.05}   # leg 6.2 m
-  - {name: east_corridor_north, area: "East wing corridor", x: 18.75, y: 26.05}   # leg 11.7 m
-  - {name: east_room_w, area: "East wing room", x: 14.05, y: 26.25}   # leg 5.4 m
-  - {name: east_north, area: "East wing north", x: 18.55, y: 31.05}   # leg 8.6 m
-  - {name: east_north_room, area: "East wing north", x: 14.05, y: 34.55}   # leg 8.4 m
-  - {name: east_north_end, area: "East wing north", x: 19.15, y: 34.95}   # leg 13.3 m
-  - {name: east_corridor_back, area: "East wing corridor", x: 18.75, y: 5.05}   # leg 31.0 m
-  - {name: se_lobby, area: "South-east lobby", x: 19.05, y: -1.45}   # leg 6.6 m
-  - {name: link_corridor, area: "Link corridor", x: 18.95, y: -6.45}   # leg 5.0 m
-  - {name: surgical_corridor_mid, area: "Surgical corridor", x: 18.95, y: -12.45}   # leg 6.0 m
+  - {name: east_entry, area: "Ward entrance", x: 13.55, y: 7.55}   # leg 9.4 m
+  - {name: east_corridor_south, area: "Ward corridor", x: 18.75, y: 7.55}   # leg 5.5 m
+  - {name: east_corridor_mid, area: "Ward corridor", x: 18.75, y: 19.95}   # leg 12.4 m
+  - {name: east_room_e, area: "Ward bedroom B2", x: 22.4, y: 19.5}   # leg 3.9 m
+  - {name: east_corridor_north, area: "Ward corridor", x: 18.75, y: 26.05}   # leg 9.4 m
+  - {name: east_room_w, area: "Ward bedroom B6", x: 16.0, y: 23.18}   # leg 5.2 m
+  - {name: east_north, area: "Ward north hall", x: 18.55, y: 31.05}   # leg 10.0 m
+  - {name: east_north_room, area: "Ward north hall", x: 14.0, y: 30.5}   # leg 4.7 m
+  - {name: east_north_end, area: "Ward north hall", x: 19.15, y: 34.95}   # leg 9.8 m
+  - {name: east_corridor_back, area: "Ward corridor", x: 18.75, y: 5.05}   # leg 30.8 m
+  - {name: se_lobby, area: "South-east lobby", x: 19.23, y: -1.45}   # leg 6.7 m
+  - {name: link_corridor, area: "Link corridor", x: 19.23, y: -6.45}   # leg 5.0 m
+  - {name: surgical_corridor_mid, area: "Surgical corridor", x: 18.95, y: -12.45}   # leg 6.2 m
   - {name: surgical_corridor_west, area: "Surgical corridor", x: 8.55, y: -12.45}   # leg 10.5 m
   - {name: sterile_store, area: "Sterile store", x: 9.95, y: -17.35}   # leg 5.6 m
   - {name: sterile_store_south, area: "Sterile store", x: 10.55, y: -20.45}   # leg 4.2 m
@@ -74,11 +83,11 @@ waypoints:
   - {name: theatre_instrument_table, area: "Operating theatre", x: 25.65, y: -20.05}   # leg 4.5 m
   - {name: theatre_exit, area: "Operating theatre", x: 25.95, y: -15.65}   # leg 4.5 m
   - {name: surgical_corridor_east, area: "Surgical corridor", x: 29.05, y: -12.45}   # leg 5.6 m
-  - {name: pacu_door, area: "PACU", x: 25.95, y: -9.95}   # leg 4.9 m
+  - {name: pacu_door, area: "PACU", x: 25.95, y: -9.95}   # leg 5.0 m
   - {name: pacu_east, area: "PACU", x: 29.65, y: -8.35}   # leg 4.5 m
-  - {name: pacu_west, area: "PACU", x: 22.05, y: -8.45}   # leg 7.8 m
-  - {name: pacu_exit, area: "PACU", x: 25.95, y: -10.95}   # leg 5.7 m
+  - {name: pacu_west, area: "PACU", x: 23.3, y: -8.45}   # leg 6.6 m
+  - {name: pacu_exit, area: "PACU", x: 25.95, y: -10.95}   # leg 4.7 m
   - {name: corridor_link_back, area: "Surgical corridor", x: 18.95, y: -12.45}   # leg 7.9 m
-  - {name: link_back, area: "Link corridor", x: 18.95, y: -5.95}   # leg 6.5 m
-  - {name: se_lobby_back, area: "South-east lobby", x: 18.05, y: -0.95}   # leg 5.4 m
-  - {name: home, area: "Main lobby (start)", x: 0.55, y: -0.45}   # leg 24.6 m
+  - {name: link_back, area: "Link corridor", x: 19.23, y: -5.95}   # leg 6.7 m
+  - {name: se_lobby_back, area: "South-east lobby", x: 19.23, y: -0.95}   # leg 5.0 m
+  - {name: home, area: "Main lobby (start)", x: 0.55, y: -0.45}   # leg 28.3 m

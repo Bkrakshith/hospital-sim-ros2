@@ -23,6 +23,18 @@ Autonomy additions (docs/interfaces.md 6):
     (geometry_msgs/PoseStamped, world frame; CHEAT) glides the welded base to another stance in a straight line
     (stands in for walking in fixed-base mode; the mission uses it instead of Nav2 there).
 
+Building fixtures (sim only, docs/interfaces.md 3.1): fire doors, bed-lift doors and lift buttons of the whole
+hospital (surgical wing and main building) are MuJoCo bodies (g1-mujoco-sim/fixtures_mjcf.py) driven every step by
+the shared FixtureController (hospital-sim-env/fixtures/hospital_fixtures.py, also used by Isaac Sim) through
+g1_mujoco_sim.fixtures. The parameter fixtures_tier (wing | tier1 | tier2 | full; "" = $HG1_FIXTURES, else tier2)
+selects the scene <world>_g1_<tier>.xml when the parameter model is empty; all simulators and scene builds must use
+the same tier. /sim/fire_alarm (Bool) is one building-wide alarm: it releases every hold-open magnet and recalls
+every lift (both banks); /sim/fixtures/press (String) is a virtual press of any button of the spec, by short name:
+LobbyCall, MainCall, Lift1_Open, Lift2_Close, MainLift1_Open, MainLift2_Close, ...; /sim/lift/call (Trigger)
+presses LobbyCall (wing bank) and /sim/lift/call_main (Trigger) presses MainCall (main-building bank): success
+false while the fire alarm is on (the call is ignored, as in Isaac); /sim/fixtures (String JSON, 10 Hz) is the
+controller state of every door and lift. /sim/reset puts the fixtures back to their initial state.
+
 Harness ("elastic band", like unitree_mujoco): holds the pelvis at its spawn pose while the robot starts in
 DAMP. Released automatically `harness_release_delay` s after /g1/mode becomes STAND (fading out over
 `harness_fade` s), or via /sim/harness false. /sim/reset re-spawns and re-attaches it.
@@ -45,7 +57,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState, LaserScan, PointCloud2, PointField
-from std_msgs.msg import String
+from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool, Trigger
 from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 from unitree_hg.msg import LowCmd, LowState
@@ -55,6 +67,7 @@ from g1_mujoco_sim.lidar import Mid360, Scan2D
 from g1_mujoco_sim.model_map import BODY_JOINTS, HAND_SLOTS, ModelMap
 from g1_mujoco_sim.scene_objects import BaseGlide, SceneObjects, weld_to_world
 from g1_mujoco_sim.head_camera import HeadCamera, _u8
+from g1_mujoco_sim import fixtures as fixtures_mod
 
 
 def _stamp(t):
@@ -109,7 +122,8 @@ class SimNode(Node):
         root = _repo_root()
         p = self.declare_parameter
         p("world", "hospital")
-        p("model", "")                      # scene MJCF; default g1-mujoco-sim/<world>_g1.xml
+        p("model", "")                      # scene MJCF; default g1-mujoco-sim/<world>_g1_<fixtures_tier>.xml
+                                            # (else <world>_g1.xml)
         p("spawn", "")                      # spawn name from worlds/spawns.json, or "x,y,yaw"; "" = world default
         p("viewer", False)
         p("harness", True)
@@ -145,11 +159,34 @@ class SimNode(Node):
         p("object_offset", [0.0, 0.0, 0.0]) # dx, dy, dyaw applied to the rack + instruments by /sim/reset_objects
         p("surgeon_grip", True)             # simulated surgeon grip (proximity + dwell -> weld)
         p("estop_stub", True)               # publish /g1/estop/heartbeat (simulated hardware e-stop, stubs.py)
+        p("fixtures", True)                 # fire doors + bed lifts (when the model has them)
+        p("fixtures_spec", "")              # "" = <model dir>/worlds/fixtures.json (written by build_world.py)
+        p("fixtures_module", "")            # "" = <root>/hospital-sim-env/fixtures/hospital_fixtures.py
+        p("fixtures_rate", 10.0)            # /sim/fixtures Hz
+        p("fixtures_tier", "")              # wing | tier1 | tier2 | full; "" = $HG1_FIXTURES, else tier2
         g = self.get_parameter
         world = g("world").value
-        model_path = g("model").value or os.path.join(root, "g1-mujoco-sim", f"{world}_g1.xml")
+        self.fixtures_tier = fixtures_mod.resolve_tier(g("fixtures_tier").value)
+        model_path = g("model").value or fixtures_mod.scene_for_tier(os.path.join(root, "g1-mujoco-sim"), world,
+                                                                     self.fixtures_tier)
         self.get_logger().info(f"loading {model_path}")
         self.m = mujoco.MjModel.from_xml_path(model_path)
+        built_tier, _ = fixtures_mod.model_fixtures_info(self.m)
+        if built_tier is not None and built_tier != self.fixtures_tier \
+                and os.path.basename(model_path) == f"{world}_g1.xml":
+            # the default scene (e.g. passed by g1_bringup sim.launch.py) of another tier: use the tier's own scene
+            alt = fixtures_mod.scene_for_tier(os.path.dirname(model_path), world, self.fixtures_tier)
+            if alt != model_path:
+                self.get_logger().info(f"fixtures_tier {self.fixtures_tier}: loading {alt} instead")
+                model_path = alt
+                self.m = mujoco.MjModel.from_xml_path(model_path)
+                built_tier, _ = fixtures_mod.model_fixtures_info(self.m)
+        if built_tier is not None and built_tier != self.fixtures_tier:
+            self.get_logger().warn(f"fixtures_tier {self.fixtures_tier} requested, but {model_path} was built at "
+                                   f"{built_tier}: the fixtures run at {built_tier}. Run g1-mujoco-sim/build_world.py "
+                                   f"(it writes hospital_g1_<tier>.xml for every tier) or pass the matching model.")
+        self.fixtures_tier = built_tier or self.fixtures_tier
+        self.model_path = model_path
         self.d = mujoco.MjData(self.m)
         self.M = ModelMap(self.m)
         low = self.m.dof_armature[self.M.dadr] < g("min_armature").value
@@ -266,6 +303,28 @@ class SimNode(Node):
                                [f"{s}_hand_{k}" for k in HAND_SLOTS]) for s in ("left", "right")}
         self.js_names = list(BODY_JOINTS) + (self.hand_names["left"] + self.hand_names["right"]
                                              if self.M.has_hands else [])
+        # building fixtures: fire doors, bed lifts, buttons (shared controller, see module docstring)
+        self.fixtures = None
+        self.fixture_cmds = []              # (kind, arg) from ROS callbacks, applied in the physics thread
+        self.fixture_lock = threading.Lock()
+        if g("fixtures").value:
+            spec_path, module_path = fixtures_mod.default_paths(root, model_path, self.m)
+            self.fixtures, why = fixtures_mod.load(self.m, g("fixtures_spec").value or spec_path,
+                                                   g("fixtures_module").value or module_path)
+            if self.fixtures is None:
+                self.get_logger().info(f"building fixtures off: {why}")
+            else:
+                sp = self.fixtures.spec
+                self.get_logger().info(f"building fixtures, tier {sp.get('tier', '?')}: {len(self.fixtures.names)} "
+                                       f"joints ({len(sp['doors'])} fire doors, {len(self.fixtures.ctl.leaves)} "
+                                       f"leaves, {len(self.fixtures.ctl.lifts)} lifts, buttons "
+                                       f"{sorted(self.fixtures.button_names())})")
+                self.pub_fixtures = self.create_publisher(String, "/sim/fixtures", 10)
+                self.create_subscription(Bool, "/sim/fire_alarm", self.on_fire_alarm, 10)
+                self.create_subscription(String, "/sim/fixtures/press", self.on_fixture_press, 10)
+                self.create_service(Trigger, "/sim/lift/call", lambda req, res: self.on_lift_call(res, "LobbyCall"))
+                self.create_service(Trigger, "/sim/lift/call_main",
+                                    lambda req, res: self.on_lift_call(res, "MainCall"))
         self.respawn()
 
     # ------------------------------------------------------------------ callbacks (ROS thread)
@@ -307,6 +366,47 @@ class SimNode(Node):
         yaw = math.atan2(2 * (o.w * o.z + o.x * o.y), 1 - 2 * (o.y * o.y + o.z * o.z))
         self.glide_goal = (msg.pose.position.x, msg.pose.position.y, yaw)
 
+    def on_fire_alarm(self, msg):
+        with self.fixture_lock:
+            self.fixture_cmds.append(("alarm", bool(msg.data)))
+
+    def on_fixture_press(self, msg):
+        name = msg.data.strip()
+        known = self.fixtures.button_names()     # every button of the spec: calls of both banks, car panels
+        if name.removeprefix("fx_") not in known:
+            self.get_logger().warn(f"/sim/fixtures/press: unknown button '{name}' (known: {sorted(known)})")
+            return
+        with self.fixture_lock:
+            self.fixture_cmds.append(("press", name))
+
+    def on_lift_call(self, res, button):
+        # Same reply as Isaac (run_sim.py): the call is ignored while the fire alarm is on (lifts on fire recall).
+        # A queued alarm command counts, so an alarm published just before the call is not missed.
+        if button not in self.fixtures.button_names():
+            res.success = False
+            res.message = f"no {button} in this model (fixture tier {self.fixtures_tier})"
+            return res
+        with self.fixture_lock:
+            alarm = self.fixtures.ctl.alarm
+            for kind, arg in self.fixture_cmds:
+                if kind == "alarm":
+                    alarm = arg
+            self.fixture_cmds.append(("press", button))
+        res.success = not alarm
+        res.message = f"lift called ({button})" if res.success else \
+            f"fire alarm: lifts on recall, {button} call ignored"
+        return res
+
+    def apply_fixture_cmds(self):
+        with self.fixture_lock:
+            cmds, self.fixture_cmds = self.fixture_cmds, []
+        for kind, arg in cmds:
+            if kind == "alarm":
+                self.fixtures.ctl.set_alarm(arg)
+                self.get_logger().info(f"fire alarm {'ON' if arg else 'reset'}")
+            else:
+                self.fixtures.ctl.press(arg)
+
     def on_reset_objects(self, req, res):
         self.reset_objects_requested = True
         res.success = True
@@ -334,6 +434,8 @@ class SimNode(Node):
         self.M.set_body_q(self.d, self.spawn_q)
         if getattr(self, "fixed_base", False):
             self.d.qpos[fq + 2] = self.get_parameter("fixed_base_height").value
+        if getattr(self, "fixtures", None) is not None:
+            self.fixtures.reset(self.d)     # held doors open on their magnets, lifts closed, alarm off
         mujoco.mj_forward(self.m, self.d)
         if getattr(self, "fixed_base", False):
             weld_to_world(self.m, self.d, "fixed_base", "pelvis")
@@ -538,6 +640,8 @@ class SimNode(Node):
         dec_view = max(1, int(round(1.0 / 60.0 / self.dt)))
         dec_obj = max(1, int(round(1.0 / g("objects_rate") / self.dt)))
         dec_grip = 10
+        dec_fix = max(1, int(round(1.0 / g("fixtures_rate") / self.dt)))
+        fix_busy = 0.0
         grip = bool(g("surgeon_grip")) and self.objects.has_surgeon
         if self.camera is not None:
             self.camera.start()
@@ -575,6 +679,12 @@ class SimNode(Node):
             t_start = time.perf_counter()
             self.apply_harness()
             self.apply_motors()
+            if self.fixtures is not None:
+                t_fix = time.perf_counter()
+                if self.fixture_cmds:
+                    self.apply_fixture_cmds()
+                self.fixtures.step(self.d, self.dt)
+                fix_busy += time.perf_counter() - t_fix
             mujoco.mj_step(self.m, self.d)
             step += 1
             t = self.d.time
@@ -598,6 +708,8 @@ class SimNode(Node):
                 n = self.objects.update_grip(self.d, dec_grip * self.dt)
                 if n:
                     self.get_logger().info(f"simulated surgeon grip: {n}")
+            if self.fixtures is not None and step % dec_fix == 0:
+                self.pub_fixtures.publish(String(data=self.fixtures.state_json(self.d)))
             if step % dec_obj == 0 and self.objects.bodies:
                 self.pub_objects.publish(String(data=self.objects.to_json(self.d)))
             if self.camera is not None:
@@ -622,11 +734,14 @@ class SimNode(Node):
                       "camera_hz": self.camera.rate_measured() if self.camera is not None else None,
                       "camera_render_ms": self.camera.render_ms() if self.camera is not None else None,
                       "surgeon_holding": self.objects.held, "objects": len(self.objects.bodies),
+                      "fixtures_us_mean": round(1e6 * fix_busy / dec_status, 1) if self.fixtures is not None else None,
+                      "fixtures_tier": self.fixtures_tier if self.fixtures is not None else None,
                       "glide": {"active": self.glide.active,
                                 "remaining": None if self.glide_remaining is None else round(self.glide_remaining, 3)},
                       "pelvis_xyz": [round(float(v), 3) for v in self.d.qpos[self.M.free_q:self.M.free_q + 3]]}
                 self.pub_status.publish(String(data=json.dumps(st)))
                 win_wall, win_sim, win_cmd, busy, late_steps = now, t, self.lowcmd_count, 0.0, 0
+                fix_busy = 0.0
             if realtime:
                 target = wall0 + (t - sim0)
                 slack = target - time.perf_counter()
@@ -669,7 +784,7 @@ def main():
         path = node.get_parameter("record_path").value
         if path and getattr(node, "rec_q", None):
             np.savez_compressed(path, t=np.array(node.rec_t), qpos=np.array(node.rec_q),
-                                model=node.get_parameter("model").value or "")
+                                model=getattr(node, "model_path", node.get_parameter("model").value or ""))
             print(f"recorded {len(node.rec_q)} frames -> {path}")
         ex.shutdown()
         node.destroy_node()

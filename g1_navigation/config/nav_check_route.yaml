@@ -6,12 +6,17 @@
 # Map frame = sim world frame. Named locations: g1_mission/config/locations.yaml.
 frame: map
 start: {x: 0.0, y: 0.0, yaw: 0.0, note: main_lobby}
+# Stair boxes = the enclosed up-stairs and the sealed down-stair pits (same as config/survey_route.yaml).
 stairs:
-- name: central stair hall
-  box: [7.66, 11.0, 10.26, 15.0]
-- name: north-west hall
-  box: [-32.44, 15.45, -29.84, 19.45]
+- name: east stair enclosure
+  box: [7.4, 10.4, 11.16, 19.35]
+- name: west stair enclosure
+  box: [-32.44, 14.45, -29.55, 23.6]
+- name: south-west down-stair pit
+  box: [-48.34, 1.75, -42.05, 6.95]
+- name: north-east down-stair pit
+  box: [10.76, 32.2, 18.07, 36.85]
 waypoints:
   - {name: theatre_instrument_table, area: "Operating theatre", x: 25.58, y: -20.12, yaw: -1.5708}
-  - {name: east_wing_corridor, area: "East wing corridor", x: 18.8, y: 20.0, yaw: 1.5708}
+  - {name: east_wing_corridor, area: "Ward corridor", x: 18.8, y: 20.0, yaw: 1.5708}
   - {name: main_lobby, area: "Main lobby", x: 0.0, y: 0.0, yaw: 0.0}

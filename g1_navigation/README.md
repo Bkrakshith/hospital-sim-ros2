@@ -142,9 +142,18 @@ Against the Isaac collider ground truth, the occupied cells are 2.5 cm (mean) an
 99.6 % of them are within 10 cm. 96.6 % of the reachable floor is mapped as free. The slam_toolbox pose graph could not be
 serialized (see "Tested").
 
-The file `stairs_keepout.yaml/.pgm` is a Nav2 KeepoutFilter mask, not a map. It covers both staircases plus 1.25 m
-(plus the 0.25 m robot radius = 1.5 m). The launch file `navigation.launch.py` loads it (`keepout_mask:=`), and both
-costmaps use it.
+The file `stairs_keepout.yaml/.pgm` is a Nav2 KeepoutFilter mask, not a map. Since the main-building re-plan of
+2026-10-13, the up-stairs are enclosed by screens with FD30S doors, and fixed screens seal the down-stairs. The mask
+covers the two stair enclosures and the two sealed down-stair pits, each grown by 0.25 m (`stairs_keepout_m`). It
+only stops the planner from entering them. The script `scripts/make_keepout.py` writes it from the `stairs` boxes of
+`config/survey_route.yaml`. The launch file `navigation.launch.py` loads it (`keepout_mask:=`), and both costmaps use
+it.
+
+```bash
+python3 ros2_ws/src/hospital-sim-ros2/g1_navigation/scripts/make_keepout.py \
+    --route ros2_ws/src/hospital-sim-ros2/g1_navigation/config/survey_route.yaml \
+    --out ros2_ws/src/hospital-sim-ros2/g1_navigation/maps/stairs_keepout
+```
 
 The image `survey_route.png` shows the survey route (config/survey_route.yaml) on the collider raster.
 
@@ -158,25 +167,78 @@ non-robot geom whose height overlaps 0.08 m to 1.8 m is projected to the floor. 
 simulator. For AMCL on it, set the initial pose in world coordinates (spawn corridor_west = (8.93, -12.45, 0)). It is
 useful as a reference, or to test Nav2 without mapping first.
 
+Moving building fixtures (bodies named `fx_*`) need special rules in the ground-truth map:
+
+- The fire-door leaves and the lift buttons are not in the map. The doorways stay free.
+- The closed lift door panels are in the map. With the static lift fronts and car shells, they close the cars of
+  both lift banks (wing and main building). Thus the planner never routes into a car.
+
+The static world geoms are walls in the map, whatever their prefix:
+
+- `sp_*`: the main-building screens, rebuilt walls, vision-panel glass and link junction boxes;
+- `closed_*`: doorways whose building doorset the fixture tier leaves out. The asset's own leaves stay there, as in
+  Isaac. At `tier2` these are the 8 FD30S hazard-room doors. Some asset leaves stand ajar or open, for example
+  `Ward_Cleaners`;
+- `ext_*`: kerbs, canopy posts, sign posts and the ambulance;
+- the main-entrance glass units, only below `tier2`.
+
+The lidar sees the leaves, so the obstacle layer (global costmap) and the voxel layer (local costmap) mark a
+closed door. The layers mark up to 5 m and 3.5 m. They clear a cell only when a ray passes through it, up to
+6 m and 4 m. A door that opens out of the lidar's view stays marked until the robot sees it again. Kept-shut fire
+doors (Store, ScrubStore, FinalExit, the stair doors, D07_Exit, D34_Exit) stay closed. Nav2 plans through them on
+the map, then stops at the leaf. The held-open fire doors (Compartment, CrossCorridor, LiftLobby, Theatre,
+W_Compartment, E_Compartment, Main_LiftLobby) close only on `/sim/fire_alarm`.
+
+The map `hospital_gt` was regenerated on 2026-10-13 from `g1-mujoco-sim/hospital_g1.xml` (fixture tier `tier2`), after
+the main-building re-plan. It has these changes:
+
+- the 4 m link with its 2.73 m building opening (free x 18.09..20.79 at the opening line);
+- the PACU wall at wing x = 4 and three PACU bays;
+- the A&E rooms, the resus bays and the ambulance courtyard (doors D13 and D14 open);
+- the 6-bed ward with its partitions and en-suites;
+- the stair enclosures and the screened down-stairs;
+- the main lift bank, with closed cars;
+- the A&E lane and apron kerbs, the canopy posts and the ambulance in bay AE1.
+
+The resolution (0.05 m), the origin (-49.44, -25.64) and the size (1825 x 1272 cells) did not change. The option
+`--origin` keeps the origin fixed. The A&E lane and apron fit in the old extent. The last committed map had 1648
+cells across: the width grew to 1825 cells earlier, because the wing lift-car shells reach world x = 40.8 m. The SLAM
+maps `hospital_full` and `hospital_wing_slam` are older than the re-plan. They are stale. Survey again to update
+them. The keepout mask `stairs_keepout` has its own origin in the same world frame, so it stays aligned.
+
 The files `<map>.waypoints.json` hold named waypoint routes ("tasks") saved from the dashboard.
 
 Regenerate the ground-truth map after the simulator world changes:
 
 ```bash
-# Rasterise the MuJoCo world into maps/hospital_gt.yaml and .pgm.
-.venv/bin/python ros2_ws/src/hospital-sim-ros2/g1_navigation/scripts/rasterize_world.py \
-    --mjcf g1-mujoco-sim/hospital_g1.xml --out ros2_ws/src/hospital-sim-ros2/g1_navigation/maps/hospital_gt
+# Rebuild the MuJoCo world from layout.py, then rasterise it into maps/hospital_gt.yaml and .pgm.
+taskset -c 0-7,10-31 .venv/bin/python g1-mujoco-sim/build_world.py --check
+taskset -c 0-7,10-31 .venv/bin/python ros2_ws/src/hospital-sim-ros2/g1_navigation/scripts/rasterize_world.py \
+    --mjcf g1-mujoco-sim/hospital_g1.xml --out ros2_ws/src/hospital-sim-ros2/g1_navigation/maps/hospital_gt \
+    --origin -49.44 -25.64
 ```
+
+Use `hospital_g1_<tier>.xml` for the map of another fixture tier. Use the same tier as the simulator.
+
+The option `--layout` (no MuJoCo world needed) reads the rooms, doorways, openings and partitions of the surgical
+wing from `hospital-sim-env/isaac/scene/layout.py`. It draws the lift fronts as closed walls and closes the 4 m
+link's hospital opening 2 m north of it. Its frame is the wing-local frame of `layout.py`. The dashboard's mock robot uses it.
 
 ## Hospital survey (Isaac, 2026-10-09/10)
 
-The route `config/survey_route.yaml` has 60 waypoints and about 530 m planned (A* on the Isaac collider raster). The
-route is:
+The route `config/survey_route.yaml` has 60 waypoints and about 517 m planned (A* on the Isaac collider raster,
+tier2, 2026-10-13). The route is:
 
 ```
-lobby -> central hall -> west wing -> north-west ward -> central hall -> stair hall (kept 1.5 m off) -> east wing
--> SE lobby -> link -> surgical corridor, sterile store, pre-op, scrub, theatre, PACU -> back to the start
+lobby -> A&E hall -> resus -> W compartment door -> A&E majors corridor, isolation, staff base, majors cubicle,
+equipment park -> central hall -> east of the stair enclosure -> ward entrance -> ward corridor, bedrooms B2 and B6,
+north hall -> SE lobby -> 4 m link -> surgical corridor, sterile store, pre-op, scrub, theatre, PACU -> back to the start
 ```
+
+On 2026-10-13 the waypoints moved off the new partitions and dressing: `nw_room` (resus), `west_link`,
+`west_room_nw`, `sw_hall`, `east_room_e`, `east_room_w`, `east_north_room` and `pacu_west`. The link waypoints are
+on the link's centre line, x 19.23. The `stairs` boxes are now the enclosures and the pits, kept 0.25 m away.
+All 60 legs are reachable with a 0.35 m robot radius. The survey itself was not run again on the new building.
 
 The script `scripts/plot_survey_route.py` checks and plots it (`maps/survey_route.png`).
 

@@ -126,7 +126,7 @@ The table lists the main modules and scripts of the repository.
 
 | Piece | File | Role |
 |---|---|---|
-| Simulator node | `g1_mujoco_sim/g1_mujoco_sim/sim_node.py` | MuJoCo at 500 Hz, `/lowcmd` in, `/lowstate`, `/clock`, `/joint_states`, `/odom`, TF, hands, `/sim/status`, `/sim/reset`, `/sim/harness`, `/sim/objects`, `/sim/reset_objects`, `/sim/fixed_base_goal` |
+| Simulator node | `g1_mujoco_sim/g1_mujoco_sim/sim_node.py` | MuJoCo at 500 Hz, `/lowcmd` in, `/lowstate`, `/clock`, `/joint_states`, `/odom`, TF, hands, `/sim/status`, `/sim/reset`, `/sim/harness`, `/sim/objects`, `/sim/reset_objects`, `/sim/fixed_base_goal`; building fixtures (fire doors, bed lifts: `/sim/fire_alarm`, `/sim/fixtures/press`, `/sim/lift/call`, `/sim/fixtures`; adapter `g1_mujoco_sim/fixtures.py`) |
 | Lidar model | `g1_mujoco_sim/g1_mujoco_sim/lidar.py` | MID-360 point cloud (10 Hz, 10 000 points per frame) and 720-beam `/scan` through `mj_multiRay` |
 | Head camera | `g1_mujoco_sim/g1_mujoco_sim/head_camera.py` | RGB-D render in a separate process, 640x360 at 15 Hz, only while subscribed |
 | Scene objects | `g1_mujoco_sim/g1_mujoco_sim/scene_objects.py` | ground-truth object poses, rack offsets, simulated surgeon grip, fixed-base weld (no ROS) |

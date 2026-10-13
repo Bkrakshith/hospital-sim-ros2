@@ -20,3 +20,23 @@ zones:
   - name: surgical_corridor
     max_speed: 0.6
     polygon: [[6.5, -15.3], [31.0, -15.3], [31.0, -10.5], [6.5, -10.5]]
+  # Main building (re-plan of 2026-10-13, world frame; room rectangles of hospital-sim-env/isaac/scene/layout.py
+  # BUILDING_ROOMS, slightly grown to the wall centre lines). Rooms with patients first (first match wins).
+  - name: ward_bedrooms_east          # B1..B5 with en-suites, workstations WS1/WS2, assisted shower, day room
+    max_speed: 0.4
+    polygon: [[20.85, -4.25], [26.8, -4.25], [26.8, 28.6], [20.85, 28.6]]
+  - name: ward_rooms_west             # B6, cleaners, clean utility, pantry, dirty utility, disposal hold
+    max_speed: 0.4
+    polygon: [[11.25, 10.4], [17.2, 10.4], [17.2, 28.6], [11.25, 28.6]]
+  - name: ward_corridor_and_entrance  # ward corridor and the nurse base at the ward entrance (C3)
+    max_speed: 0.5
+    polygon: [[11.25, 4.1], [20.85, 4.1], [20.85, 32.2], [17.2, 32.2], [17.2, 10.25], [11.25, 10.25]]
+  - name: ae_resus                    # A&E resus, 2 bays
+    max_speed: 0.4
+    polygon: [[-29.55, 14.45], [-23.5, 14.45], [-23.5, 23.8], [-29.55, 23.8]]
+  - name: ae_majors                   # majors cubicles, isolation, staff base, utilities and their corridor (C1)
+    max_speed: 0.5
+    polygon: [[-48.1, 7.05], [-32.5, 7.05], [-32.5, 32.7], [-48.1, 32.7]]
+  - name: ae_handover_and_courtyard   # ambulance courtyard, doors D13/D14 and the handover bay
+    max_speed: 0.5
+    polygon: [[-38.25, 1.75], [-26.5, 1.75], [-26.5, 10.6], [-38.25, 10.6]]

@@ -52,7 +52,7 @@ def main():
         "main_lobby": {"x": 0.0, "y": 0.0, "yaw": 0.0, "note": "main lobby in front of the reception desk (survey start)"},
         "se_lobby": {"x": 19.0, "y": -1.5, "yaw": -1.5708, "note": "hospital SE lobby, north of the door to the wing"},
         "pre_op": wing(-6.0, -4.35, 180, "pre-op bay, west of its door"),
-        "pacu": wing(6.0, -4.05, 0, "recovery (PACU), east of its door"),
+        "pacu": wing(9.0, -3.3, 0, "recovery (PACU), east of its door"),  # middle bay foot (PACU wing x 4..14, 2026-10-13)
         "east_wing_corridor": {"x": 18.8, "y": 20.0, "yaw": 1.5708, "note": "main hospital east-wing corridor"},
         "west_wing_corridor": {"x": -40.0, "y": 20.0, "yaw": 1.5708, "note": "main hospital west-wing corridor"},
     }
