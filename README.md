@@ -25,7 +25,6 @@ At build time and at run time the packages read files from these sibling reposit
 - `g1-mujoco-sim` (scenes)
 - `g1-whole-body-rl` (trained policies, none yet)
 - `hospital-sim-env` (object catalogue, room layout)
-- `hospital-sim-ui` (dashboard server)
 - `g1-webcam-teleop` (hand landmarker model)
 - `g1-isaac-sim` (Isaac backend)
 
@@ -83,19 +82,17 @@ hand targets on `/g1/auto/*`.
 The mission node reads object poses from `/sim/objects` (simulator ground truth) or from `g1_perception`
 (`/g1/perception/detections`, `/g1/perception/surgeon_hand`). The perception nodes run on `/sim/objects` (mode `gt`)
 or on the head camera. In camera mode the detector uses an external YOLO-OBB ONNX model that the user supplies, and
-the hand node uses MediaPipe hands. The dashboard server from `hospital-sim-ui` is one more rclpy node on the same
-topics. With a simulator, every node runs with `use_sim_time:=true`.
+the hand node uses MediaPipe hands. With a simulator, every node runs with `use_sim_time:=true`.
 
 ## Architecture
 
-The diagram shows the ten nodes and the main topics between them. The full system map, the control layers and the
+The diagram shows the nine nodes and the main topics between them. The full system map, the control layers and the
 mode diagram are in `docs/architecture.md` of the master repository. Topic names, types and rates are in
 `docs/interfaces.md`.
 
 ```mermaid
 flowchart LR
   KB["g1_teleop_keyboard<br/>keyboard_node"]
-  UI["hospital-sim-ui server<br/>iPad app + console"]
   CAM["g1-webcam-teleop<br/>arm + hand tracking"]
   MGR["g1_teleop_manager<br/>manager_node: mode FSM,<br/>arbiter, lease, watchdog,<br/>e-stop gate, speed zones"]
   CTRL["g1_controller<br/>controller_node: ONNX policy 50 Hz,<br/>PD targets to lowcmd 500 Hz"]
@@ -106,12 +103,9 @@ flowchart LR
   PERC["g1_perception<br/>detector_node, surgeon_hand_node"]
 
   KB -- "/g1/teleop/key" --> MGR
-  UI -- "/g1/teleop/key_ui · /g1/ui/heartbeat<br/>/g1/set_mode · /g1/control/lease" --> MGR
-  UI -- "/g1/mission/command<br/>/g1/mission/request_instrument" --> MIS
   CAM -- "/g1/teleop/upper_body_target_raw<br/>/g1/teleop/hand/*/cmd_raw" --> MGR
   MGR -- "/g1/mode · /g1/cmd_vel<br/>/g1/upper_body_target" --> CTRL
   MGR -- "/g1/hand/*/cmd" --> SIM
-  MGR -- "/g1/mode · manager_status" --> UI
   CTRL -- "/lowcmd" --> SIM
   SIM -- "/lowstate" --> CTRL
   SIM -- "/joint_states" --> RSP
@@ -141,7 +135,7 @@ The table lists the main modules and scripts of the repository.
 | Navigation | `g1_navigation/config/nav2_params.yaml`, `slam_toolbox_online_async.yaml`, `launch/*.py`, `maps/` | Nav2 and slam_toolbox parameters, saved maps, keep-out mask; see `g1_navigation/README.md` |
 | Mission | `g1_mission/g1_mission/mission_node.py`, `tree.py`, `skills/`, `kinematics.py`, `ros_io.py`, `interfaces.py`, `recorder.py`, `offline.py` | the node, behaviour tree, skill library, pinocchio IK, ROS adapters, object sources, LeRobot recorder, offline MuJoCo harness; see `g1_mission/README.md` |
 | Perception | `g1_perception/g1_perception/detector_node.py`, `obb_onnx.py`, `grasp.py`, `gt.py`, `surgeon_hand_node.py`, `camera_pose.py` | detections from ground truth or an ONNX OBB model, grasp pose from OBB and depth, surgeon hand from ground truth or MediaPipe, camera pose lookup |
-| Bringup | `g1_bringup/launch/sim.launch.py`, `teleop.launch.py`, `slam.launch.py`, `nav.launch.py`, `mission.launch.py`, `dashboard.launch.py`, `all.launch.py`; `scripts/e2e_sim_check.py` | top-level launch files and the end-to-end check |
+| Bringup | `g1_bringup/launch/sim.launch.py`, `teleop.launch.py`, `slam.launch.py`, `nav.launch.py`, `mission.launch.py`, `all.launch.py`; `scripts/e2e_sim_check.py` | top-level launch files and the end-to-end check |
 | Vendored messages | `third_party/unitree_ros2/{unitree_hg,unitree_go,unitree_api}` | Unitree message packages; `SOURCE.md` has the commit and the one CMake patch, `LICENSE` is BSD-3 |
 
 ## Dependencies
@@ -277,19 +271,16 @@ ros2 launch g1_bringup sim.launch.py backend:=isaac
 ros2 launch g1_bringup slam.launch.py
 ros2 launch g1_bringup nav.launch.py [map:=<name in g1_navigation/maps | path>] [slam:=true]
 
-# Run the dashboard (hospital-sim-ui server): http://localhost:8080, https://localhost:8443; mock:=true needs no simulator.
-ros2 launch g1_bringup dashboard.launch.py
-
 # Run the scrub-nurse mission: simulator with the theatre set, fixed base at the instrument table, mission node.
-ros2 launch g1_bringup mission.launch.py [fixed_base:=false] [dashboard:=true] [object_source:=perception]
+ros2 launch g1_bringup mission.launch.py [fixed_base:=false] [object_source:=perception]
 ros2 service call /g1/mission/request_instrument g1_interfaces/srv/RequestInstrument "{instrument: scalpel_handle, requester: cli}"
 #   fixed_base:=false spawns at corridor_west and adds Nav2 + AMCL on maps/hospital_gt (initial pose from ground truth).
 
 # Run the perception nodes; the defaults are ground truth from /sim/objects (simulator only, flagged "source": "ground_truth").
 ros2 launch g1_perception perception.launch.py [detector:=onnx model:=/path/model.onnx] [hand:=mediapipe]
 
-# Run everything in one launch file: sim.launch.py plus optional slam, nav, dashboard and mission.
-ros2 launch g1_bringup all.launch.py [slam:=true] [nav:=true] [dashboard:=true] [mission:=true]
+# Run everything in one launch file: sim.launch.py plus optional slam, nav and mission.
+ros2 launch g1_bringup all.launch.py [slam:=true] [nav:=true] [mission:=true]
 
 # Run the mode manager alone (real robot, or a simulator started with manager:=false).
 ros2 launch g1_bringup teleop.launch.py
@@ -343,7 +334,7 @@ The table lists the folders and files of the repository.
 | `g1_navigation/` | ament_cmake: `config/` (Nav2, slam_toolbox, survey routes), `launch/` (`slam`, `localization`, `navigation`, `nav`), `maps/` (`hospital_full`, `hospital_gt`, `hospital_wing_slam`, `stairs_keepout`), `rviz/`, `scripts/` (survey and map tools), `README.md` |
 | `g1_mission/` | ament_python: `mission_node`, `tree.py`, `skills/`, `kinematics.py`, `ros_io.py`, `interfaces.py`, `recorder.py`, `offline.py`, `config/` (`mission.yaml`, generated `locations.yaml` and `instruments.yaml`, `grasp_overrides.yaml`), `scripts/` (`make_locations.py`, `run_trials.py`, `offline_trials.py`, `walk_test.py`, `check_extraction.py`), `test/`, `README.md` |
 | `g1_perception/` | ament_python: `detector_node`, `surgeon_hand_node`, `obb_onnx.py`, `grasp.py`, `gt.py`, `camera_pose.py`, `geometry.py`, `config/perception.yaml`, `launch/perception.launch.py`, `test/` |
-| `g1_bringup/` | ament_cmake: `launch/` (`sim`, `teleop`, `slam`, `nav`, `mission`, `dashboard`, `all`), `scripts/e2e_sim_check.py` |
+| `g1_bringup/` | ament_cmake: `launch/` (`sim`, `teleop`, `slam`, `nav`, `mission`, `all`), `scripts/e2e_sim_check.py` |
 | `requirements.txt` | venv-side Python pins |
 
 ## Interfaces to other repositories
@@ -361,15 +352,14 @@ The table lists what this repository reads from the sibling repositories. The pa
 | `g1-mujoco-sim` | `<world>_g1.xml`, `worlds/spawns.json`, `worlds/theatre_setup.json`, `render_replay.py` (for `record:=`) | `g1_mujoco_sim`, `sim.launch.py`, `g1_mission/scripts/make_locations.py` |
 | `g1-whole-body-rl` | `exports/<name>/policy.onnx` + `policy.json` | `g1_controller` `policy:=<name>` |
 | `hospital-sim-env` | `objects/catalog.json`, `isaac/scene/layout.py` | `g1_perception` (catalogue boxes, lengths), `g1_mission`, `make_locations.py`, `rasterize_world.py --layout` |
-| `hospital-sim-ui` | `server/` (started by `dashboard.launch.py` with `.venv/bin/python`), `tools/mock_robot.py` (`mock:=true`) | `g1_bringup` |
 | `g1-webcam-teleop` | `xr_teleoperate/teleop/webcam/models/hand_landmarker.task`; its teleop node publishes `/g1/teleop/upper_body_target_raw`, `/g1/teleop/hand/*/cmd_raw` | `surgeon_hand_node` mode `mediapipe`, `g1_teleop_manager` |
 | `g1-isaac-sim` | `run.sh` (run by hand for `backend:=isaac`); it publishes the same `/lowstate`, `/scan`, `/odom`, cameras | `sim.launch.py backend:=isaac` |
 
 This repository provides:
 
 - the `g1_interfaces` types and every `/g1/*`, `/sim/*`, `/lowcmd` and `/lowstate` topic and service of the contract
-- `g1_navigation/maps/`, the default `--maps-dir` of the UI server, where "Save map" writes `<name>.yaml/.pgm` and `<map>.waypoints.json`
-- `g1_mission/config/locations.yaml` (named places, mirrored for display in `hospital-sim-ui/server/config/places.yaml`)
+- `g1_navigation/maps/`, where the saved maps (`<name>.yaml/.pgm`) live
+- `g1_mission/config/locations.yaml` (named places)
 - the ONNX sidecar contract that `g1-whole-body-rl` exports against
 
 The perception model contract (mode `onnx`) is a static `1x3xSxS` YOLO-OBB ONNX export with a sidecar

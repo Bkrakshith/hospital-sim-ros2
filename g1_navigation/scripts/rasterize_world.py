@@ -3,17 +3,17 @@
 
 This is NOT a SLAM map: it is computed from the simulator's geometry and is meant as a seed /
 reference (e.g. to test Nav2 before a SLAM map exists, or to compare SLAM results against).
-The primary way to make maps is SLAM (g1_navigation slam.launch.py + the dashboard's Mapping page).
+The primary way to make maps is SLAM (g1_navigation slam.launch.py).
 
 Two backends:
   --mjcf PATH    exact: every non-robot geom whose vertical extent overlaps the robot's body band
                  (default 0.08..1.80 m) is projected onto the floor (boxes/meshes as their true
                  convex footprint, other primitives as their bounding box).
   --layout       approximate: walls + doors from hospital-sim-env/isaac/scene/layout.py (no furniture except a few
-                 labelled boxes). Used by the dashboard's mock robot when no sim world exists.
+                 labelled boxes). Useful when no sim world exists.
 
 The map frame equals the simulator's world frame (origin of the MJCF / wing-local frame of
-layout.py). For AMCL, set the initial pose from the dashboard.
+layout.py). For AMCL, set the initial pose in RViz.
 
     rasterize_world.py --mjcf g1-mujoco-sim/hospital_g1.xml --out maps/hospital_gt
     rasterize_world.py --layout --out maps/hospital_layout_gt
@@ -196,7 +196,7 @@ def rasterize_mjcf(path, zmin=0.08, zmax=1.80, margin=1.0, robot_root='pelvis', 
 # ---------------------------------------------------------------------------------------------
 def layout_walls():
     """Wall segments (x0, y0, x1, y1) of the surgical wing in wing-local metres, doors cut out,
-    plus a few labelled furniture boxes. Approximation of hospital-sim-env/isaac/scene/layout.py for the mock robot."""
+    plus a few labelled furniture boxes. Approximation of hospital-sim-env/isaac/scene/layout.py."""
     rooms = {
         'Link': (0, -6, 2, 0), 'PreOp': (-10, -6, 0, 0), 'PACU': (2, -6, 14, 0),
         'Corridor': (-12, -10, 14, -6),

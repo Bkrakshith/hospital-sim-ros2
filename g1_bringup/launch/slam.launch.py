@@ -1,7 +1,7 @@
 """SLAM for the G1 (slam_toolbox online async on /scan). Wrapper around g1_navigation/slam.launch.py.
 
     ros2 launch g1_bringup slam.launch.py [use_sim_time:=true]
-Save the map from the dashboard (Mapping -> Save map) or with
+Save the map with
     ros2 run nav2_map_server map_saver_cli -f $HG1_ROOT/ros2_ws/src/hospital-sim-ros2/g1_navigation/maps/<name>
 """
 import os

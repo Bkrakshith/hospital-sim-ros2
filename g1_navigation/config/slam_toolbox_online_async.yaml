@@ -24,7 +24,7 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     transform_publish_period: 0.02
-    map_update_interval: 2.0    # the dashboard shows the map live while mapping; 2 s keeps it responsive
+    map_update_interval: 2.0    # the map is shown live while mapping; 2 s keeps it responsive
     resolution: 0.05
     min_laser_range: 0.25       # ignore returns off the robot's own arms/hands
     max_laser_range: 15.0       # MID-360 reaches ~40 m but the wing's longest corridor is 26 m

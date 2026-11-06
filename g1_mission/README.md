@@ -46,8 +46,6 @@ ros2 service call /g1/mission/request_instrument g1_interfaces/srv/RequestInstru
 ros2 topic pub --once /g1/mission/command std_msgs/String "{data: abort}"
 ```
 
-The Mission page of the dashboard does the same (`dashboard:=true`, http://localhost:8080/#/mission).
-
 ## Dependencies
 
 The table lists the dependencies of this package and the files that use them.
@@ -252,7 +250,7 @@ place.
 | Surgeon "grip" = simulator weld after proximity + dwell | `g1_mujoco_sim/scene_objects.py`, `SurgeonHandSource.holding()` | tug or force detection in the hand (Revo2 current), or perception. `holding()` returning None already makes the handover release after `blind_wait` |
 | The surgeon stand-in puts the held instrument back in its rack slot when the next one is offered (out of the rack, within 0.40 m of the hand) | `scene_objects.update_grip` / `_return_to_rack` | a human (or a used-instrument tray) |
 | Pelvis pose from `/sim/ground_truth` (arm targets, FineAlign) | `RosRobot.base_T` (`base_source`), `GroundTruthStation` | TF map->pelvis from AMCL for navigation; for manipulation, object poses measured in the robot frame (head camera) make the world pose unnecessary; FineAlign: a table marker (ArUco/AprilTag) or a table-edge estimate that implements `StationEstimator` |
-| AMCL initial pose from ground truth | `mission_node.send_initial_pose` (`initial_pose:=ground_truth`) | the operator sets it on the dashboard, or a known docking pose |
+| AMCL initial pose from ground truth | `mission_node.send_initial_pose` (`initial_pose:=ground_truth`) | the operator sets it in RViz, or a known docking pose |
 | Grasp transform measured from ground truth after the pick | `ScriptedPick._verify` | nominal grasp (already the fallback), or in-hand pose from the head camera |
 | Fixed base (pelvis welded) for the arm part | `g1_mujoco_sim fixed_base:=true` | the whole-body (Stage B) policy with arm reaching |
 | Walking between the table and the surgeon in fixed-base mode = straight-line glide of the welded base (no collision checks) | `/sim/fixed_base_goal`, `ros_io.GlideNav`, the glide branch of FineAlign | Nav2 + the walking policy (already the path when `fixed_base:=false`) |
