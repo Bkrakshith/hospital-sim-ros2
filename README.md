@@ -22,7 +22,6 @@ They read files from these sibling repositories at build time and at run time:
 
 - `g1-brainco-description` (URDF)
 - `g1-mujoco-sim` (scenes)
-- `g1-whole-body-rl` (trained policies, none yet)
 - `hospital-sim-env` (object catalogue, room layout)
 - `g1-webcam-teleop` (hand landmarker model)
 - `g1-isaac-sim` (Isaac backend)
@@ -44,7 +43,7 @@ torque limit.
 
 The controller `g1_controller/controller_node.py` answers every `/lowstate` with one `/lowcmd` (500 Hz). It runs
 the policy every `control_dt / sim_dt` messages (10 for the placeholder, 50 Hz). The module `policy.py` loads
-`policy.onnx` and its `policy.json` sidecar from `g1-whole-body-rl/exports/<name>/` or `g1_controller/policies/<name>/`.
+`policy.onnx` and its `policy.json` sidecar from a folder given by path or from `g1_controller/policies/<name>/`.
 It builds the observation from the `obs` list of the sidecar only (IMU, projected gravity, `cmd_vel`, joint positions
 and velocities, last action, optional history). It runs onnxruntime and writes the joint targets
 `default_qpos + action * action_scale` with the sidecar `kp` and `kd`.
@@ -203,7 +202,7 @@ The table lists the files that this repository needs but does not contain.
 |---|---|---|
 | Robot model `g1_29dof_brainco/{urdf,meshes,mjcf,robot_spec.json}` | `g1-brainco-description` (in that repository; regenerate with `python g1-brainco-description/build_model.py`) | `g1_description` build, `g1_mission` IK |
 | MuJoCo scenes `hospital_g1.xml`, `flat_g1.xml`, `worlds/*.json` | `g1-mujoco-sim` (committed there; regenerate with `python g1-mujoco-sim/build_world.py`) | `g1_mujoco_sim`, `g1_mission/scripts/make_locations.py` |
-| Trained whole-body policy `policy.onnx` + `policy.json` | `g1-whole-body-rl/exports/<name>/`; none exists yet, nothing has been trained | `g1_controller` (`policy:=<name>`) |
+| Your own whole-body policy `policy.onnx` + `policy.json` | a folder of your own; none ships here (train one with [GR00T-WholeBodyControl](https://github.com/NVlabs/GR00T-WholeBodyControl)) | `g1_controller` (`policy:=<dir>`) |
 | Placeholder policy | in this repository, `g1_controller/policies/unitree_g1_12dof_placeholder/` (converted from the `motion.pt` of Unitree's `unitree_rl_gym`) | default `policy` |
 | Instrument detector ONNX | an external YOLO-OBB ONNX model that the user supplies (`model` parameter or `G1_PERCEPTION_MODEL`); the stack ships none | `g1_perception detector_node` mode `onnx` only |
 | `hand_landmarker.task` | `g1-webcam-teleop/xr_teleoperate/teleop/webcam/models/` | `surgeon_hand_node` mode `mediapipe` only |
@@ -251,7 +250,7 @@ agent drives your arms.
 # Run the simulator, robot_state_publisher, controller and mode manager: headless hospital, placeholder policy.
 ros2 launch g1_bringup sim.launch.py
 #   Arguments: backend:=mujoco|isaac  world:=hospital|flat  viewer:=true  spawn:=corridor_west|link|lobby|"x,y,yaw"
-#         policy:=<g1-whole-body-rl/exports name | g1_controller/policies name | dir>  effort_limits:=auto|model|ultra
+#         policy:=<g1_controller/policies name | dir>  effort_limits:=auto|model|ultra
 #         harness:=true  lidar:=true  camera:=true  fixed_base:=false  record:=/tmp/run.npz  compute_crc:=false
 #   Expect: "effort_limits auto -> ultra", "loading .../g1-mujoco-sim/hospital_g1.xml", "spawn 'corridor_west'",
 #           "policy unitree_g1_12dof_placeholder (PLACEHOLDER) ... obs 47, control_dt 0.02, decimation 10"
@@ -349,7 +348,6 @@ The table lists what this repository reads from the sibling repositories. The pa
 |---|---|---|
 | `g1-brainco-description` | `g1_29dof_brainco/urdf/g1_29dof_brainco_ros.urdf`, `_ik.urdf`, `meshes/`, `mjcf/`, `robot_spec.json` | `g1_description` CMake install, `g1_mission/kinematics.py`, `g1_mujoco_sim` (`effort_limits:=ultra` reads `robot_spec.json`) |
 | `g1-mujoco-sim` | `<world>_g1.xml`, `worlds/spawns.json`, `worlds/theatre_setup.json`, `render_replay.py` (for `record:=`) | `g1_mujoco_sim`, `sim.launch.py`, `g1_mission/scripts/make_locations.py` |
-| `g1-whole-body-rl` | `exports/<name>/policy.onnx` + `policy.json` | `g1_controller` `policy:=<name>` |
 | `hospital-sim-env` | `objects/catalog.json`, `isaac/scene/layout.py` | `g1_perception` (catalogue boxes, lengths), `g1_mission`, `make_locations.py`, `rasterize_world.py --layout` |
 | `g1-webcam-teleop` | `xr_teleoperate/teleop/webcam/models/hand_landmarker.task`; its teleop node publishes `/g1/teleop/upper_body_target_raw`, `/g1/teleop/hand/*/cmd_raw` | `surgeon_hand_node` mode `mediapipe`, `g1_teleop_manager` |
 | `g1-isaac-sim` | `run.sh` (run by hand for `backend:=isaac`); it publishes the same `/lowstate`, `/scan`, `/odom`, cameras | `sim.launch.py backend:=isaac` |
@@ -359,7 +357,7 @@ This repository provides:
 - the `g1_interfaces` types and every `/g1/*`, `/sim/*`, `/lowcmd` and `/lowstate` topic and service of the contract
 - `g1_navigation/maps/`, where the saved maps (`<name>.yaml/.pgm`) live
 - `g1_mission/config/locations.yaml` (named places)
-- the ONNX sidecar contract that `g1-whole-body-rl` exports against
+- the ONNX sidecar contract that trained policies follow
 
 The perception model contract (mode `onnx`) is a static `1x3xSxS` YOLO-OBB ONNX export with a sidecar
 `<model>.json`. The sidecar carries `{"labels": [...], "imgsz": S}`. The raw head is `[1, 4 + nc + 1, N]` (cx, cy, w,
@@ -382,9 +380,9 @@ ros2 launch g1_bringup teleop.launch.py
 - The robot must be in low-level (debug) mode, with its sport service released, before it obeys `/lowcmd`.
 - Nothing is deployed on a real robot today.
 
-## Trained policies (g1-whole-body-rl/exports)
+## Trained policies
 
-The controller reads these sidecar extensions of `g1-whole-body-rl/exports` on top of the contract (section 4):
+The controller reads these sidecar extensions on top of the contract (section 4):
 
 - a flat ONNX history input `(1, H*frame)`, oldest frame first; on (re)start all rows hold the first frame
 - `onnx.file`, `onnx.input` and `onnx.output`
@@ -419,7 +417,7 @@ The placeholder has these limits:
   elbow 1.0) make it walk off and fall. Moderate poses ("hold a tray") are fine (about 0.03 m/s drift).
 - It needs about 0.34 m/s commanded before it moves forward. Speed caps below 0.4 m/s in `zones.yaml` therefore
   stop it altogether, and the `g1_mission` FineAlign skill uses a forward floor.
-- The real whole-body policy comes from `g1-whole-body-rl/exports/<name>/` through `policy:=<name>`, and
+- A trained whole-body policy is loaded with `policy:=<dir>`, and
   `effort_limits:=auto` then uses the limits of the robot model.
 
 ## Known issues
