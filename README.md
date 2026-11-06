@@ -2,11 +2,10 @@
 
 Part of [WardZero](https://bkrakshith.github.io/wardzero/), a simulated hospital for testing robots before they meet patients. Start from the main repository, [hospital-sim](https://github.com/Bkrakshith/hospital-sim).
 
-This repository is the ROS 2 Humble side of the hospital G1 project. It holds the `g1_*` packages and the
-vendored Unitree messages under `third_party/`. The repository implements the contract in `docs/interfaces.md` of
-the master repository (topics, modes, key bindings, policy sidecar). The simulator publishes the low-level topics of
-the real G1 (`/lowcmd`, `/lowstate`, `unitree_hg`). The same controller, mode manager and teleop nodes can therefore
-point at the real robot later.
+The ROS 2 Humble packages that drive the Unitree G1 in WardZero. They implement the contract in
+`docs/interfaces.md` of `hospital-sim` (topics, modes, key bindings, policy sidecar). The simulators publish the
+real G1's low-level topics (`/lowcmd`, `/lowstate`, `unitree_hg`), so the same controller, mode manager and teleop
+nodes can later point at the real robot. Unitree's messages are vendored under `third_party/`.
 
 The `g1_*` packages are:
 
@@ -16,10 +15,10 @@ The `g1_*` packages are:
 - the keyboard teleop node
 - the SLAM and Nav2 configuration
 - the perception nodes
-- the scrub-nurse mission
+- a mission layer built on py_trees behaviour trees
 - the bringup launch files
 
-At build time and at run time the packages read files from these sibling repositories:
+They read files from these sibling repositories at build time and at run time:
 
 - `g1-brainco-description` (URDF)
 - `g1-mujoco-sim` (scenes)
@@ -28,12 +27,12 @@ At build time and at run time the packages read files from these sibling reposit
 - `g1-webcam-teleop` (hand landmarker model)
 - `g1-isaac-sim` (Isaac backend)
 
-The master repository `hospital-sim` checks everything out side by side. This repository sits at
-`ros2_ws/src/hospital-sim-ros2`, and `ros2_ws/` is the colcon workspace. The script `env.sh` in the master repository
-exports `HG1_ROOT`. The packages use `HG1_ROOT` to find the sibling repositories.
+This repository sits at `ros2_ws/src/hospital-sim-ros2` in a `hospital-sim` checkout, and `ros2_ws/` is the colcon
+workspace. `env.sh` in the `hospital-sim` root exports `HG1_ROOT`, which the packages use to find the sibling
+repositories.
 
-Paths in this README are relative to this repository unless they name a sibling repository (`g1-mujoco-sim/...`) or
-a master file (`env.sh`, `docs/interfaces.md`). Run the commands from the root of the master checkout.
+Paths are relative to this folder unless they name a sibling repository (`g1-mujoco-sim/...`) or a file in the
+`hospital-sim` root (`env.sh`, `docs/interfaces.md`). Commands run from the root of the `hospital-sim` checkout.
 
 ## How it works
 
