@@ -1,17 +1,17 @@
 """Everything for the simulated hospital: sim.launch.py (sim + description + controller + teleop manager)
-plus slam / nav / dashboard launch files from this package's launch/ directory when they exist.
+plus slam / nav launch files from this package's launch/ directory when they exist.
 
-    ros2 launch g1_bringup all.launch.py [backend:=mujoco|isaac] [world:=hospital] [viewer:=false] [dashboard:=true]
+    ros2 launch g1_bringup all.launch.py [backend:=mujoco|isaac] [world:=hospital] [viewer:=false]
                                          [slam:=false] [nav:=false] [mission:=false]
 
-SLAM and Nav2 are started/stopped from the dashboard (Mapping / Navigation pages), so they are off here by
-default; set slam:=true / nav:=true only when running without the dashboard (not both with it: duplicates).
-mission:=true adds the scrub-nurse mission node (g1_mission; Mission page in the dashboard). It navigates with Nav2,
-so start Nav2 with a saved map (default hospital_full) (dashboard Navigation page or nav:=true) or use mission.launch.py, which
+SLAM and Nav2 are off by default. Set slam:=true to map. Set nav:=true to run Nav2 with AMCL on the default saved
+map, or slam:=true nav:=true to run Nav2 on the live SLAM map.
+mission:=true adds the scrub-nurse mission node (g1_mission). It navigates with Nav2,
+so start Nav2 with a saved map (default hospital_full) (nav:=true) or use mission.launch.py, which
 brings up everything including Nav2 and the fixed-base option.
 
-Extra launch files are included only if present (they are provided by the navigation/UI part of the stack):
-  slam.launch.py, nav.launch.py, dashboard.launch.py   (all receive use_sim_time)
+Extra launch files are included only if present (they are provided by the navigation part of the stack):
+  slam.launch.py, nav.launch.py   (both receive use_sim_time)
 """
 import os
 
@@ -33,7 +33,7 @@ def _setup(context):
         actions.append(Node(package="g1_mission", executable="mission_node", name="g1_mission", output="screen",
                             parameters=[{"use_sim_time": lc("use_sim_time").lower() in ("1", "true", "yes"),
                                          "use_nav": True}]))
-    for name in ("slam", "nav", "dashboard"):
+    for name in ("slam", "nav"):
         path = os.path.join(here, f"{name}.launch.py")
         if lc(name).lower() not in ("1", "true", "yes"):
             continue
@@ -59,7 +59,6 @@ def generate_launch_description():
         DeclareLaunchArgument("effort_limits", default_value="auto"),
         DeclareLaunchArgument("slam", default_value="false"),
         DeclareLaunchArgument("nav", default_value="false"),
-        DeclareLaunchArgument("dashboard", default_value="true"),
         DeclareLaunchArgument("mission", default_value="false", description="scrub-nurse mission node (g1_mission)"),
         OpaqueFunction(function=_setup),
     ])

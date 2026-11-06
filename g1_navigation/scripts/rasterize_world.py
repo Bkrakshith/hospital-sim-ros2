@@ -3,7 +3,7 @@
 
 This is NOT a SLAM map: it is computed from the simulator's geometry and is meant as a seed /
 reference (e.g. to test Nav2 before a SLAM map exists, or to compare SLAM results against).
-The primary way to make maps is SLAM (g1_navigation slam.launch.py + the dashboard's Mapping page).
+The primary way to make maps is SLAM (g1_navigation slam.launch.py).
 
 Two backends:
   --mjcf PATH    exact: every non-robot geom whose vertical extent overlaps the robot's body band
@@ -22,10 +22,10 @@ Two backends:
                  (only below tier2). Use the scene of the tier that the robot runs at (hospital_g1.xml = tier2).
   --layout       approximate: walls + doors from hospital-sim-env/isaac/scene/layout.py (KIT_ROOMS, SUITE_ROOMS,
                  DOORWAYS, OPENINGS, PARTITIONS; lift fronts closed; a few labelled furniture boxes), in the
-                 wing-local frame. Used by the dashboard's mock robot when no sim world exists.
+                 wing-local frame. Useful when no sim world exists.
 
 The map frame equals the simulator's world frame (origin of the MJCF / wing-local frame of
-layout.py). For AMCL, set the initial pose from the dashboard.
+layout.py). For AMCL, set the initial pose in RViz.
 
     rasterize_world.py --mjcf g1-mujoco-sim/hospital_g1.xml --out maps/hospital_gt --origin -49.44 -25.64
         (hospital_g1.xml is the default fixture tier, tier2; hospital_g1_<tier>.xml for another tier)

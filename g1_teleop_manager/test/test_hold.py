@@ -1,4 +1,4 @@
-"""HOLD ("Stop", docs/ui/README.md decision 1): transitions, arm freeze semantics, resume paths. Pure FSM."""
+"""HOLD ("Stop", docs/interfaces.md): transitions, arm freeze semantics, resume paths. Pure FSM."""
 import os
 import sys
 
@@ -24,8 +24,8 @@ def fsm_in(mode):
 @pytest.mark.parametrize("m", [STAND, LOCO, MANIP, NAV, AUTO])
 def test_stop_from_every_active_mode(m):
     f = fsm_in(m)
-    ok, msg = f.request(HOLD, "ui:ipad-1", 5.0)
-    assert ok and f.mode == HOLD and f.hold_from == m and f.source == "ui:ipad-1", msg
+    ok, msg = f.request(HOLD, "ui:station-1", 5.0)
+    assert ok and f.mode == HOLD and f.hold_from == m and f.source == "ui:station-1", msg
     assert not f.blending(5.0)
 
 
@@ -91,7 +91,7 @@ def test_hold_to_auto_only_when_held_from_auto():
 
 def test_ui_with_identity_counts_as_ui_for_auto():
     f = fsm_in(STAND)
-    assert f.request(AUTO, "ui:ipad-7", 1.0)[0]
+    assert f.request(AUTO, "ui:station-7", 1.0)[0]
 
 
 def test_hold_to_damp():

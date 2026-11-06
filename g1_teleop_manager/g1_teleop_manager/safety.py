@@ -1,10 +1,10 @@
 """Control lease, UI heartbeat watchdog, hardware e-stop monitor, motion gate and speed zones for the teleop manager
-(docs/interfaces.md 3.4; docs/ui/README.md decisions 1, 2, 4). No ROS imports, so every rule is unit-tested.
+(docs/interfaces.md 3.4). No ROS imports, so every rule is unit-tested.
 
 Trust model: the manager is authoritative for the lease. Identity comes from the channels that carry one: the SetMode
 `source` ("ui:<device_id>", "keyboard", "mission", ...), the lease service, `/g1/teleop/key_ui` (JSON with a holder)
 and `/g1/ui/heartbeat`. `/g1/teleop/key` (terminal keyboard) is identity "keyboard". Anonymous streams
-(/g1/cmd_vel_teleop, camera teleop targets) are the physical channels of whoever holds the lease; the UI server only
+(/g1/cmd_vel_teleop, camera teleop targets) are the physical channels of whoever holds the lease; a UI client only
 forwards them from its lease holder.
 """
 import math
@@ -15,7 +15,7 @@ UNGATED_SOURCES = {"mission", "safety", "watchdog", "estop_hw", "lease"}   # the
 
 
 def identity(source):
-    """SetMode source -> lease identity. 'ui:ipad-1' stays as is; 'keyboard' -> 'keyboard'; 'ui' -> 'ui'."""
+    """SetMode source -> lease identity. 'ui:station-1' stays as is; 'keyboard' -> 'keyboard'; 'ui' -> 'ui'."""
     return source or "service"
 
 

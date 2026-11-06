@@ -6,13 +6,13 @@ sources in AUTO_SOURCES (the mission executive or the UI, docs/interfaces.md 6).
 accepted immediately but the new STAND reports detail "blending" for manip_blend_time while the arms go back to
 default; during the blend only DAMP is accepted. Same-mode requests are accepted as no-ops.
 
-HOLD (= "Stop", docs/ui/README.md decision 1) is kept out of LEGAL on purpose (LEGAL is the original 6-mode table):
+HOLD (= "Stop", docs/interfaces.md) is kept out of LEGAL on purpose (LEGAL is the original 6-mode table):
   any mode except DAMP -> HOLD, also during an arm blend (the blend is cancelled: the arms freeze where they are);
   HOLD -> STAND (explicit resume; the arms blend from the frozen pose to default over hold_blend_time >= 2 s,
   skipped when they are already within HOLD_BLEND_TOL of default); HOLD -> AUTO only when the robot was in AUTO when
   it was stopped and the request comes from AUTO_SOURCES (resume the paused mission); HOLD -> DAMP always.
   HOLD requested in DAMP is accepted as a no-op (nothing to hold: the robot is powered down).
-Sources may carry an identity after a colon ("ui:ipad-or1"); AUTO_SOURCES checks the part before it.
+Sources may carry an identity after a colon ("ui:station-or1"); AUTO_SOURCES checks the part before it.
 
 arms_hold (sub-state of MANIP, docs/interfaces.md 3.2): the camera teleop arm and hand streams are not forwarded and the
 controller freezes the arms at the measured pose (like HOLD) while the robot stays in MANIP; switched off by the same
@@ -42,7 +42,7 @@ HOLD_BLEND_TOL = 0.05              # rad: frozen arms closer than this to defaul
 
 
 def source_kind(source):
-    """'ui:ipad-1' -> 'ui'; 'keyboard' -> 'keyboard'."""
+    """'ui:station-1' -> 'ui'; 'keyboard' -> 'keyboard'."""
     return (source or "").split(":", 1)[0]
 
 # input channel -> modes in which it is forwarded

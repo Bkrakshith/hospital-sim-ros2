@@ -1,18 +1,18 @@
 """Scrub-nurse mission in the MuJoCo hospital: sim (theatre set, optional fixed base) + controller + mode manager
-+ [Nav2 localisation on a saved map] + g1_mission mission_node [+ dashboard].
++ [Nav2 localisation on a saved map] + g1_mission mission_node.
 
     ros2 launch g1_bringup mission.launch.py                       # fixed base at the instrument table (arm skills)
     ros2 launch g1_bringup mission.launch.py fixed_base:=false     # walk: spawn corridor_west, Nav2 + AMCL on hospital_gt
     args: fixed_base:=true|false  spawn:=<name|x,y,yaw> (default theatre_table / corridor_west)
           nav:=auto|true|false (auto = Nav2 unless fixed_base)  map:=hospital_gt (name in g1_navigation/maps or path; hospital_full = Isaac SLAM map)
-          initial_pose:=ground_truth|""|"x,y,yaw" (AMCL seed; ground_truth = CHEAT)  dashboard:=false
+          initial_pose:=ground_truth|""|"x,y,yaw" (AMCL seed; ground_truth = CHEAT)
           record_dir:="" (LeRobot recording, off)  record:="" (sim qpos .npz for videos)  viewer:=false
           autostart:=false  repeat:=true
           object_source:=ground_truth|perception  surgeon_source:=ground_truth|perception  policy:=<controller policy>
 
-Then: press r (keyboard node or dashboard) -> STAND, and request an instrument:
+Then: press r (keyboard node) -> STAND, and request an instrument:
     ros2 service call /g1/mission/request_instrument g1_interfaces/srv/RequestInstrument "{instrument: scalpel_handle, requester: cli}"
-or use the dashboard's Mission page. p (STAND) / x (DAMP) override the mission at any time.
+p (STAND) / x (DAMP) override the mission at any time.
 """
 import os
 
@@ -58,10 +58,6 @@ def _setup(context):
                      "record_dir": lc("record_dir"), "autostart": _truthy(lc("autostart")),
                      "repeat": _truthy(lc("repeat")), "object_source": lc("object_source"),
                      "surgeon_source": lc("surgeon_source")}]))
-    if _truthy(lc("dashboard")):
-        actions.append(IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(here, "dashboard.launch.py")),
-            launch_arguments={"use_sim_time": "true"}.items()))
     return actions
 
 
@@ -73,7 +69,6 @@ def generate_launch_description():
         DeclareLaunchArgument("nav", default_value="auto", choices=["auto", "true", "false"]),
         DeclareLaunchArgument("map", default_value="hospital_gt"),
         DeclareLaunchArgument("initial_pose", default_value="ground_truth"),
-        DeclareLaunchArgument("dashboard", default_value="false"),
         DeclareLaunchArgument("record_dir", default_value=""),
         DeclareLaunchArgument("viewer", default_value="false"),
         DeclareLaunchArgument("record", default_value="", description="sim qpos .npz for g1-mujoco-sim/render_replay.py"),

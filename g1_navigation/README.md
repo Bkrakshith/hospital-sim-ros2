@@ -33,8 +33,8 @@ The `cmd_vel` of the controller server is remapped to `cmd_vel_nav_raw`, and the
 `/g1/cmd_vel_nav`. The behaviour server writes `/g1/cmd_vel_nav` directly. The mode manager `g1_teleop_manager`
 forwards `/g1/cmd_vel_nav` to `/g1/cmd_vel` only in NAV or AUTO, so Nav2 never drives without the mode allowing it.
 The launch file `nav.launch.py` combines localization (unless `slam:=true`) and navigation. The wrappers
-`g1_bringup/launch/{slam,nav}.launch.py` resolve a map name to `maps/<name>.yaml`. Goals come from the dashboard
-(`hospital-sim-ui`), RViz, `g1_mission` (`NavigateToPose`) or `scripts/survey_runner.py`.
+`g1_bringup/launch/{slam,nav}.launch.py` resolve a map name to `maps/<name>.yaml`. Goals come from RViz,
+`g1_mission` (`NavigateToPose`) or `scripts/survey_runner.py`.
 
 ## Dependencies
 
@@ -65,19 +65,18 @@ The table lists the launch files of the package and what each one runs.
 | `nav.launch.py slam:=true` | navigation only, on top of a running SLAM (navigate while mapping) |
 
 The top-level wrappers live in g1_bringup: `ros2 launch g1_bringup slam.launch.py` and
-`ros2 launch g1_bringup nav.launch.py [map:=<name|path>]` (no map = on the running SLAM). The dashboard
-(`hospital-sim-ui/`) normally runs and stops both.
+`ros2 launch g1_bringup nav.launch.py [map:=<name|path>]` (no map = on the running SLAM).
 
 ```bash
 # Activate the venv and ROS 2.
 source env.sh
 # Run the simulator in the hospital world, headless.
 ros2 launch g1_bringup sim.launch.py world:=hospital viewer:=false
-# Run SLAM, then drive in LOCO (keyboard node or dashboard).
+# Run SLAM, then drive in LOCO (keyboard node).
 ros2 launch g1_bringup slam.launch.py
-# Save the map (or use "Save map" on the dashboard).
+# Save the map.
 ros2 run nav2_map_server map_saver_cli -f $HG1_ROOT/ros2_ws/src/hospital-sim-ros2/g1_navigation/maps/my_map
-# Stop SLAM, then run Nav2 on the saved map; set the initial pose (dashboard or RViz), press g, send a goal.
+# Stop SLAM, then run Nav2 on the saved map; set the initial pose in RViz, press g, send a goal.
 ros2 launch g1_bringup nav.launch.py map:=my_map
 ```
 
@@ -121,11 +120,11 @@ The planner is Smac 2D with `allow_unknown: true`, so that navigation also works
 was the planner before the survey (see "Hospital survey").
 
 AMCL uses the omni motion model, `base_frame_id: pelvis`, 500 to 2000 particles and `set_initial_pose: false`. The
-operator sets the initial pose in the dashboard.
+operator sets the initial pose in RViz.
 
 slam_toolbox uses `base_frame: pelvis`, 5 cm cells, 15 m maximum range, and adds scans every 0.25 m or 0.25 rad.
-The TurtleBot defaults of 0.5 m / 0.5 rad miss door openings at walking pace. The map is published every 2 s for the
-live dashboard view. The value `min_laser_range 0.25` drops returns off the arms of the robot.
+The TurtleBot defaults of 0.5 m / 0.5 rad miss door openings at walking pace. The map is published every 2 s.
+The value `min_laser_range 0.25` drops returns off the arms of the robot.
 
 The argument `use_sim_time` is a launch argument everywhere (default `true`, the simulator publishes `/clock`).
 
@@ -134,7 +133,7 @@ The argument `use_sim_time` is a launch argument everywhere (default `true`, the
 The map `hospital_full.yaml/.pgm` is the default map (nav.launch.py, g1_bringup nav.launch.py). It is a lidar SLAM
 map of the whole Isaac hospital ground floor and the surgical wing. The simulated G1 built it on 2026-10-09 and
 2026-10-10 while it walked the survey route on its own (see "Hospital survey"). Its frame is the world frame (the
-walk started at the world origin facing +x), so the `g1_mission` locations, the speed zones and the dashboard places
+walk started at the world origin facing +x), so the `g1_mission` locations and the speed zones
 line up. The initial pose at the spawn is (0, 0, 0). The map has 5 cm cells and 1605x1225 cells (80 m x 61 m), and
 nothing was painted in by hand.
 
@@ -157,7 +156,7 @@ python3 ros2_ws/src/hospital-sim-ros2/g1_navigation/scripts/make_keepout.py \
 
 The image `survey_route.png` shows the survey route (config/survey_route.yaml) on the collider raster.
 
-The map `hospital_wing_slam.yaml/.pgm` is a SLAM map built in the MuJoCo simulator (dashboard, LOCO driving,
+The map `hospital_wing_slam.yaml/.pgm` is a SLAM map built in the MuJoCo simulator (LOCO driving,
 slam_toolbox). Its `map` frame is the `odom` frame of the robot at the time mapping started (spawn `corridor_west`,
 world (8.93, -12.45, 0)).
 
@@ -206,8 +205,6 @@ cells across: the width grew to 1825 cells earlier, because the wing lift-car sh
 maps `hospital_full` and `hospital_wing_slam` are older than the re-plan. They are stale. Survey again to update
 them. The keepout mask `stairs_keepout` has its own origin in the same world frame, so it stays aligned.
 
-The files `<map>.waypoints.json` hold named waypoint routes ("tasks") saved from the dashboard.
-
 Regenerate the ground-truth map after the simulator world changes:
 
 ```bash
@@ -222,7 +219,7 @@ Use `hospital_g1_<tier>.xml` for the map of another fixture tier. Use the same t
 
 The option `--layout` (no MuJoCo world needed) reads the rooms, doorways, openings and partitions of the surgical
 wing from `hospital-sim-env/isaac/scene/layout.py`. It draws the lift fronts as closed walls and closes the 4 m
-link's hospital opening 2 m north of it. Its frame is the wing-local frame of `layout.py`. The dashboard's mock robot uses it.
+link's hospital opening 2 m north of it. Its frame is the wing-local frame of `layout.py`.
 
 ## Hospital survey (Isaac, 2026-10-09/10)
 
@@ -301,16 +298,15 @@ simulator and AMCL seeded at the spawn (0, 0, 0). The goals were theatre_instrum
 east_wing_corridor 423 s (0) and main_lobby 309 s (0). All succeeded, with 0 Nav2 restarts. An earlier order
 (theatre -> PACU -> east wing) reached 2/3: the robot wedged itself on the PACU door jamb.
 
-## Tested (MuJoCo simulator, placeholder policy, through the dashboard)
+## Tested (MuJoCo simulator, placeholder policy)
 
 SLAM while driving about 60 m in LOCO produced the saved map `hospital_wing_slam`. AMCL ran on it. A NavigateToPose
 goal 14 m down the corridor succeeded (154 s, 3 recoveries at the start while the robot turned round).
-FollowWaypoints (link room and back) succeeded (110 s). With the mock robot, SLAM, AMCL, goals, waypoints and
-pause/resume all worked.
+FollowWaypoints (link room and back) succeeded (110 s).
 
-Not tested: `nav.launch.py slam:=true` on the simulator (tested on the mock only), the real robot and the real
+Not tested: `nav.launch.py slam:=true` on the simulator, the real robot and the real
 MID-360, and `all.launch.py`.
 
-The slam_toolbox pose-graph serialization fails in this install (see hospital-sim-ui/README.md). It failed again for
+The slam_toolbox pose-graph serialization fails in this install. It failed again for
 hospital_full with "Failed to write file: Exception output stream error". The likely cause (not verified) is that the
 scans carry `inf` for no-return beams (REP 117) and the text archive of boost cannot write non-finite floats.

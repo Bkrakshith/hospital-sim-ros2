@@ -1,4 +1,4 @@
-# Speed zones (docs/interfaces.md 3.4; docs/ui/02 S-5). Polygons in the map frame (= sim world frame for hospital_gt).
+# Speed zones (docs/interfaces.md 3.4). Polygons in the map frame (= sim world frame for hospital_gt).
 # The manager clamps the planar speed |(vx, vy)| of /g1/cmd_vel to max_speed while map->pelvis is inside a polygon
 # (first match wins). manual_cap applies to LOCO everywhere. Without map->pelvis (no localisation) no zone applies.
 # Approximate room outlines from ros2_ws/src/hospital-sim-ros2/g1_mission/config/locations.yaml; a technician must verify them on the

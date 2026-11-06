@@ -19,21 +19,21 @@ def ok_estop(now=0.0):
 # ---------------------------------------------------------------- lease
 def test_lease_acquire_release():
     L = Lease(ttl=30)
-    assert L.acquire("ui:a", "operator", "iPad A", "", 0.0)[0]
-    assert L.acquire("ui:a", "operator", "iPad A", "", 1.0) == (True, "already yours")
-    ok, msg = L.acquire("ui:b", "operator", "iPad B", "", 2.0)
-    assert not ok and "iPad A" in msg
+    assert L.acquire("ui:a", "operator", "Station A", "", 0.0)[0]
+    assert L.acquire("ui:a", "operator", "Station A", "", 1.0) == (True, "already yours")
+    ok, msg = L.acquire("ui:b", "operator", "Station B", "", 2.0)
+    assert not ok and "Station A" in msg
     assert not L.release("ui:b", 3.0)[0]
     assert L.release("ui:a", 3.0)[0] and L.free(3.0)
 
 
 def test_lease_steal_needs_reason_and_reports_previous():
     L = Lease()
-    L.acquire("ui:a", "operator", "iPad A", "", 0.0)
-    ok, msg, prev = L.steal("ui:b", "technician", "iPad B", "  ", 1.0)
+    L.acquire("ui:a", "operator", "Station A", "", 0.0)
+    ok, msg, prev = L.steal("ui:b", "technician", "Station B", "  ", 1.0)
     assert not ok and L.holder == "ui:a"
-    ok, msg, prev = L.steal("ui:b", "technician", "iPad B", "A left", 1.0)
-    assert ok and L.holder == "ui:b" and prev == ("ui:a", "iPad A") and "A left" in msg
+    ok, msg, prev = L.steal("ui:b", "technician", "Station B", "A left", 1.0)
+    assert ok and L.holder == "ui:b" and prev == ("ui:a", "Station A") and "A left" in msg
     assert any(k == "steal" for k, _ in L.events)
 
 
@@ -109,9 +109,9 @@ def test_gate_stop_power_off_stand_always_pass(target):
 @pytest.mark.parametrize("target", [LOCO, MANIP, NAV])
 def test_gate_non_holder_rejected(target):
     L = Lease()
-    L.acquire("ui:a", "operator", "iPad A", "", 0.0)
+    L.acquire("ui:a", "operator", "Station A", "", 0.0)
     ok, msg = gate(target, "ui:b", STAND, L, ok_estop(), 0.0)
-    assert not ok and "iPad A" in msg
+    assert not ok and "Station A" in msg
     assert gate(target, "ui:a", STAND, L, ok_estop(), 0.0)[0]
     ok, _ = gate(target, "keyboard", STAND, L, ok_estop(), 0.0)
     assert not ok

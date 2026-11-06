@@ -491,7 +491,7 @@ class Survey(Node):
         a = self.a
         self.log("start", route=a.route, waypoints=len(self.wps))
         self.publish_route()
-        if a.initial_pose:  # AMCL on a saved map: the operator's initial pose (like the dashboard's "Initial pose")
+        if a.initial_pose:  # AMCL on a saved map: the operator's initial pose
             ip = self.create_publisher(PoseWithCovarianceStamped, "/initialpose", 1)
             x, y, yaw = (float(v) for v in a.initial_pose.split(","))
             self.spin_until(lambda: self.now_s() > 0, 1e9)
