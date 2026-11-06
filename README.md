@@ -1,4 +1,6 @@
-# hospital-sim-ros2: ROS 2 nodes driving the G1
+# WardZero ROS 2 Stack for the Unitree G1
+
+Part of [WardZero](https://bkrakshith.github.io/wardzero/), a simulated hospital for testing robots before they meet patients. Start from the main repository, [hospital-sim](https://github.com/Bkrakshith/hospital-sim).
 
 This repository is the ROS 2 Humble side of the hospital G1 project. It holds the `g1_*` packages and the
 vendored Unitree messages under `third_party/`. The repository implements the contract in `docs/interfaces.md` of
